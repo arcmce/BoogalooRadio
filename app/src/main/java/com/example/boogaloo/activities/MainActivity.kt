@@ -11,7 +11,6 @@ import android.util.Log
 import com.android.volley.Request
 import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
-import com.android.volley.toolbox.Volley
 import kotlinx.android.synthetic.main.activity_main.*
 import org.json.JSONObject
 import java.lang.Exception
@@ -25,6 +24,7 @@ import android.support.design.widget.TabLayout
 import com.example.boogaloo.interfaces.ControlListener
 import com.example.boogaloo.services.MediaPlayerService
 import com.example.boogaloo.R
+import com.example.boogaloo.VolleySingleton
 import com.example.boogaloo.adapters.TabAdapter
 import kotlinx.android.synthetic.main.livelayout.*
 
@@ -124,15 +124,12 @@ class MainActivity : AppCompatActivity(), ControlListener {
     fun initializeUI() {
         Log.d("MAI", "initializeUI")
 
-//        val toolbar = findViewById<Toolbar>(R.id.tool_bar)
         setSupportActionBar(tool_bar)
 
-//        val tabLayout = findViewById<TabLayout>(R.id.tab_layout)
         tab_layout.addTab(tab_layout.newTab().setText("Live"))
         tab_layout.addTab(tab_layout.newTab().setText("Catch Up"))
         tab_layout.tabGravity = TabLayout.GRAVITY_FILL
 
-//        val viewPager = findViewById<ViewPager>(R.id.view_pager)
         val tabsAdapter =
             TabAdapter(supportFragmentManager, tab_layout.tabCount)
         view_pager.adapter = tabsAdapter
@@ -147,15 +144,6 @@ class MainActivity : AppCompatActivity(), ControlListener {
             override fun onTabReselected(p0: TabLayout.Tab?) {
             }
         })
-
-//        playButton.setOnClickListener {}
-
-//        val btn_play_pause = findViewById<Button>(R.id.playButton)
-//        btn_play_pause.setOnClickListener {
-//            val playerIntent = Intent(this, MediaPlayerService::class.java)
-//            playerIntent.action = "toggle_play_pause"
-//            startService(playerIntent)
-//        }
     }
 
     override fun playButtonClick() {
@@ -183,7 +171,6 @@ class MainActivity : AppCompatActivity(), ControlListener {
     fun updateRadioInfo() {
         Log.d("MAI", "updateRadioInfo")
 
-        val queue = Volley.newRequestQueue(this)
         val url = "https://public.radio.co/stations/sb88c742f0/status"
 
         val stringRequest = StringRequest(Request.Method.GET, url,
@@ -197,8 +184,6 @@ class MainActivity : AppCompatActivity(), ControlListener {
                     "current_track").
                     get("artwork_url_large").toString()
 
-//                val textViewTrack: TextView = findViewById(R.id.textViewTrack)
-//                textViewTrack.text = strCurrentTrack
                 textViewTrack.text = strCurrentTrack
 
                 //TODO only do this if url changes
@@ -210,7 +195,7 @@ class MainActivity : AppCompatActivity(), ControlListener {
             Response.ErrorListener {}
         )
 
-        queue.add(stringRequest)
+        VolleySingleton.getInstance(this).addToRequestQueue(stringRequest)
     }
 }
 
