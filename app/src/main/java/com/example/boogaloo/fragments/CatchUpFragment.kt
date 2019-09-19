@@ -44,30 +44,21 @@ class CatchUpFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.catchup_layout, container, false)
 
-
-//        Log.d("CUF", mDataset.toString())
-
-        // main catch up url: https://api.mixcloud.com/BoogalooRadio/playlists/
-
+        sendRequest()
 
         viewManager = GridLayoutManager(activity, 2)
 
         recyclerView = view.catch_up_recycler_view.apply {
             setHasFixedSize(true)
-
             layoutManager = viewManager
-
-//            adapter = viewAdapter
         }
-
-        sendRequests()
 
         return view
     }
 
-    fun sendRequests() {
+    fun sendRequest() {
 
-        val playlistUrl = rootMixCloudUrl + "BoogalooRadio/playlists/"
+        val playlistUrl = rootMixCloudUrl + "BoogalooRadio/playlists/?limit=1000"
 
         val playlistJSONRequest = JsonObjectRequest(Request.Method.GET, playlistUrl, null,
                 Response.Listener<JSONObject> { response ->
