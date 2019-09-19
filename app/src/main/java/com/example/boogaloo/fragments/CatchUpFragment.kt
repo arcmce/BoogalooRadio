@@ -18,13 +18,14 @@ import com.android.volley.toolbox.JsonRequest
 import com.android.volley.toolbox.StringRequest
 import com.example.boogaloo.R
 import com.example.boogaloo.VolleySingleton
+import com.example.boogaloo.adapters.CatchUpAdapter
 import kotlinx.android.synthetic.main.catchup_layout.*
 import kotlinx.android.synthetic.main.livelayout.*
 import org.json.JSONObject
 import com.example.boogaloo.models.PlaylistResponse
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.GsonBuilder
-
+import kotlinx.android.synthetic.main.catchup_layout.view.*
 
 
 class CatchUpFragment : Fragment() {
@@ -43,23 +44,23 @@ class CatchUpFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.catchup_layout, container, false)
 
-        sendRequests()
 
 //        Log.d("CUF", mDataset.toString())
 
         // main catch up url: https://api.mixcloud.com/BoogalooRadio/playlists/
 
 
-//        viewManager = GridLayoutManager(activity, 2)
-////        viewAdapter = CatchUpAdapter(myDataset)
-//
-//        recyclerView = catch_up_recycler_view.apply {
-//            setHasFixedSize(true)
-//
-//            layoutManager = viewManager
-//
+        viewManager = GridLayoutManager(activity, 2)
+
+        recyclerView = view.catch_up_recycler_view.apply {
+            setHasFixedSize(true)
+
+            layoutManager = viewManager
+
 //            adapter = viewAdapter
-//        }
+        }
+
+        sendRequests()
 
         return view
     }
@@ -74,12 +75,13 @@ class CatchUpFragment : Fragment() {
                             .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
                             .create()
 
-//                    Log.d("CUF", response.toString())
-
                     dataset = gson.fromJson(response.toString(), PlaylistResponse::class.java)
 
                     Log.d("CUF", dataset.data.size.toString())
-//                    Log.d("CUF", mDataset.toString())
+
+                    viewAdapter = CatchUpAdapter(dataset)
+                    recyclerView.adapter = viewAdapter
+
                 },
                 Response.ErrorListener {}
         )
