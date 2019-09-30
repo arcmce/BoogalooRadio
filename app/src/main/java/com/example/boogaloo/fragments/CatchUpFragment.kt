@@ -80,8 +80,4 @@ class CatchUpFragment : Fragment() {
         VolleySingleton.getInstance(context!!.applicationContext).addToRequestQueue(playlistJSONRequest)
     }
 
-
-
-
-
 }

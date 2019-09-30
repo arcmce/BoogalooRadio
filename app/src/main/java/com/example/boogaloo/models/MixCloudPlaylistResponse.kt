@@ -3,7 +3,7 @@ package com.example.boogaloo.models
 data class PlaylistResponse(
     val paging: Paging,
     val name: String,
-    val data: ArrayList<Data>
+    val data: ArrayList<PlaylistData>
 )
 
 data class Paging(
@@ -11,7 +11,7 @@ data class Paging(
     val next: String
 )
 
-data class Data(
+data class PlaylistData(
     val url: String,
     val owner: Owner,
     val name: String,
@@ -25,13 +25,4 @@ data class Owner(
     val name: String,
     val key: String,
     val pictures: Pictures
-)
-
-data class Pictures(
-    val thumbnail: String,
-    val small: String,
-    val medium: String,
-    val mediumMobile: String,
-    val large: String,
-    val extraLarge: String
 )
