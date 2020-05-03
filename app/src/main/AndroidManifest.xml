@@ -14,7 +14,7 @@
         <activity android:name=".activities.ShowActivity"></activity>
 
         <service
-            android:name=".MediaPlayerService"
+            android:name=".services.MediaPlayerService"
             android:enabled="true"
             android:exported="true" />
 

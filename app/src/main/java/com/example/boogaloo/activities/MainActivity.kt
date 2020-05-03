@@ -200,7 +200,7 @@ class MainActivity : AppCompatActivity(), ControlListener {
 }
 
 
-private class DownloadImageTask(internal val imageView: ImageView) : AsyncTask<String, Void, Bitmap?>() {
+private class DownloadImageTask(internal val imageView : ImageView) : AsyncTask<String, Void, Bitmap?>() {
     override fun doInBackground(vararg params: String?): Bitmap? {
         val imageUrl = params[0]
         return try {

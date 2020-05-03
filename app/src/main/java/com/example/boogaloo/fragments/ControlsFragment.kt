@@ -3,11 +3,12 @@ package com.example.boogaloo.fragments
 import android.content.Context
 import android.os.Bundle
 import android.support.v4.app.Fragment
+import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.example.boogaloo.interfaces.ControlListener
 import com.example.boogaloo.R
+import com.example.boogaloo.interfaces.ControlListener
 import kotlinx.android.synthetic.main.controls_layout.view.*
 
 
@@ -37,3 +38,6 @@ class ControlsFragment : Fragment() {
     }
 
 }
+
+
+
