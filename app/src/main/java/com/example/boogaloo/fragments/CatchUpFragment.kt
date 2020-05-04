@@ -1,12 +1,9 @@
 package com.example.boogaloo.fragments
 
 
-import android.net.Uri
 import android.os.Bundle
 import android.support.v4.app.Fragment
-import android.support.v4.app.FragmentPagerAdapter
 import android.support.v7.widget.GridLayoutManager
-import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.util.Log
 import android.view.LayoutInflater
@@ -15,31 +12,24 @@ import android.view.ViewGroup
 import com.android.volley.Request
 import com.android.volley.Response
 import com.android.volley.toolbox.JsonObjectRequest
-import com.android.volley.toolbox.JsonRequest
-import com.android.volley.toolbox.StringRequest
 import com.example.boogaloo.R
 import com.example.boogaloo.VolleySingleton
 import com.example.boogaloo.adapters.CatchUpAdapter
 import com.example.boogaloo.models.*
-import kotlinx.android.synthetic.main.catchup_layout.*
-import kotlinx.android.synthetic.main.livelayout.*
 import org.json.JSONObject
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.GsonBuilder
 import kotlinx.android.synthetic.main.catchup_layout.view.*
-import java.net.URL
-import java.util.function.LongFunction
 
 
 class CatchUpFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
-    private lateinit var viewAdapter: CatchUpAdapter//RecyclerView.Adapter<*>
+    private lateinit var viewAdapter: CatchUpAdapter
 
     private val rootMixCloudUrl = "https://api.mixcloud.com/" // BoogalooRadio/playlists/" // ['data'][x]['name']
 
     private lateinit var playlistDataset: PlaylistResponse
-    private lateinit var recyclerDataset: RecyclerviewModel
     private val cloudcastMap = mutableMapOf<String, CloudcastResponse>()
 
 
@@ -53,14 +43,7 @@ class CatchUpFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.catchup_layout, container, false)
 
-//        viewAdapter = CatchUpAdapter(ArrayList()) { slug ->
-//            sendCloudcastRequest(slug)
-//        }
-//        recyclerView.adapter = viewAdapter
-
         sendPlaylistRequest()
-
-//        viewAdapter.
 
         return view
     }
@@ -84,26 +67,23 @@ class CatchUpFragment : Fragment() {
 
         playlistDataset = gson.fromJson(response["response"].toString(), PlaylistResponse::class.java)
 
-        recyclerDataset = RecyclerviewModel(data = ArrayList())
+        val initialDataset = ArrayList<RecyclerItem>()
 
         for (playlist in playlistDataset.data) {
-            recyclerDataset.data.add(RecyclerItem(
+            initialDataset.add(RecyclerItem(
                 name = playlist.name,
-                thumbnail = playlist.owner.pictures.large,
+                thumbnail = playlistDataset.data[0].owner.pictures.large,
                 slug = playlist.slug
             ))
         }
 
         Log.d("CUF", "playlist dataset size" + playlistDataset.data.size.toString())
-        Log.d("CUF", "recycler dataset size" + recyclerDataset.data.size.toString())
 
 
-        viewAdapter = CatchUpAdapter(recyclerDataset.data) { slug ->
+        viewAdapter = CatchUpAdapter(initialDataset) { slug ->
             sendCloudcastRequest(slug)
         }
         recyclerView.adapter = viewAdapter
-
-        viewAdapter.updateList(recyclerDataset.data)
     }
 
     fun sendCloudcastRequest(key: String) {
@@ -122,13 +102,17 @@ class CatchUpFragment : Fragment() {
         val cloudcastData: CloudcastResponse = gson.fromJson(response["response"].toString(), CloudcastResponse::class.java)
         cloudcastMap[response["slug"] as String] = cloudcastData
 
-        for (playlist in recyclerDataset.data) {
-            if (!cloudcastData.data.isEmpty() && playlist.slug == response["slug"]) {
-                playlist.thumbnail = cloudcastData.data[0].pictures.large
-            }
-        }
+        val updateDataset = ArrayList<RecyclerItem>()
 
-        viewAdapter.updateList(recyclerDataset.data)
+        for (playlist in playlistDataset.data) {
+            updateDataset.add(RecyclerItem(
+                name = playlist.name,
+                thumbnail = cloudcastMap.get(playlist.slug)?.data?.getOrNull(0)?.pictures?.large
+                    ?: playlistDataset.data[0].owner.pictures.large,
+                slug = playlist.slug
+            ))
+        }
+        viewAdapter.updateList(updateDataset)
     }
 
     fun sendMixcloudRequest(mixcloudEndpoint: String, slug: String?, callback: (response: Map<String, Any?>) -> Unit) {

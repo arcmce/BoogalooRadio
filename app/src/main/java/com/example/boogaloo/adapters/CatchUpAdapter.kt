@@ -7,23 +7,16 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.android.volley.Request
-import com.android.volley.Response
-import com.android.volley.toolbox.JsonObjectRequest
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.RequestOptions
 import com.example.boogaloo.R
-import com.example.boogaloo.VolleySingleton
 import com.example.boogaloo.activities.ShowActivity
-import com.example.boogaloo.models.CloudcastResponse
 import com.example.boogaloo.models.RecyclerItem
-import com.google.gson.FieldNamingPolicy
-import com.google.gson.GsonBuilder
 import kotlinx.android.synthetic.main.catchup_item_layout.view.*
-import org.json.JSONObject
+import kotlin.collections.ArrayList
 
-class CatchUpAdapter(private val dataset: ArrayList<RecyclerItem>,
+class CatchUpAdapter(private var dataset: ArrayList<RecyclerItem>,
                      val listener: (String) -> Unit):
         RecyclerView.Adapter<CatchUpAdapter.ViewHolder>() {
 
@@ -59,7 +52,6 @@ class CatchUpAdapter(private val dataset: ArrayList<RecyclerItem>,
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         Log.d("CUA", "onBindViewHolder " + dataset[position].slug)
         holder.name.text = dataset[position].name
-//        holder.count.text = dataset.data[position].cloudcastCount
         Glide.with(holder.thumbnail.context)
             .load(dataset[position].thumbnail)
             .apply(requestOptions)
@@ -77,8 +69,19 @@ class CatchUpAdapter(private val dataset: ArrayList<RecyclerItem>,
     fun updateList(newList: ArrayList<RecyclerItem>) {
         Log.d("CUA", "updateList")
         val diffResult = DiffUtil.calculateDiff(CatchUpDiffCallback(this.dataset, newList))
+        dataset = newList
         diffResult.dispatchUpdatesTo(this)
+    }
 
+    override fun onBindViewHolder(holder: ViewHolder, position: Int, payloads: MutableList<Any>) {
+        if(payloads.isEmpty()) {
+            super.onBindViewHolder(holder, position, payloads)
+        } else {
+            Glide.with(holder.thumbnail.context)
+                .load(dataset[position].thumbnail)
+                .apply(requestOptions)
+                .into(holder.thumbnail)
+        }
     }
 }
 
@@ -91,17 +94,20 @@ class CatchUpDiffCallback(
         return oldDataset[oldItemPosition].name == newDataset[newItemPosition].name
     }
 
-    override fun getOldListSize(): Int {
-        return oldDataset.size
-    }
+    override fun getOldListSize(): Int = oldDataset.size
 
-    override fun getNewListSize(): Int {
-        return newDataset.size
-    }
+    override fun getNewListSize(): Int = newDataset.size
 
     override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
         return oldDataset[oldItemPosition] == newDataset[newItemPosition]
     }
 
+    override fun getChangePayload(oldItemPosition: Int, newItemPosition: Int): Any? {
+        val set = mutableSetOf<String>()
+        if (oldDataset[oldItemPosition].thumbnail != newDataset[newItemPosition].thumbnail) {
+            set.add("thumbnail")
+        }
+        return set
+    }
 }
 
