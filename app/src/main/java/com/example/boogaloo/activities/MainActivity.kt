@@ -49,7 +49,7 @@ class MainActivity : AppCompatActivity(), ControlListener {
 
         startUpdatingUI()
 
-        playAudio(radioUrl)
+        initializeMediaPlayer(radioUrl)
     }
 
     override fun onStart() {
@@ -89,6 +89,8 @@ class MainActivity : AppCompatActivity(), ControlListener {
         Log.d("MAI", "onResume, $serviceBound")
 
         startUpdatingUI()
+
+        initializeMediaPlayer(radioUrl)
     }
 
     private val serviceConnection = object: ServiceConnection {
@@ -107,17 +109,16 @@ class MainActivity : AppCompatActivity(), ControlListener {
         }
     }
 
-    fun playAudio(radioUrl: String) {
-        Log.d("MAI", "playAudio")
+    fun initializeMediaPlayer(radioUrl: String) {
+        Log.d("MAI", "initializeMediaPlayer")
+
+        val playerIntent = Intent(this, MediaPlayerService::class.java)
+        playerIntent.action = "init"
+        playerIntent.putExtra("media", radioUrl)
+        startService(playerIntent)
 
         if (!serviceBound) {
-            val playerIntent = Intent(this, MediaPlayerService::class.java)
-            playerIntent.action = "init"
-            playerIntent.putExtra("media", radioUrl)
-            startService(playerIntent)
             bindService(playerIntent, serviceConnection, Context.BIND_AUTO_CREATE)
-        } else {
-            // active
         }
     }
 
@@ -125,13 +126,21 @@ class MainActivity : AppCompatActivity(), ControlListener {
         Log.d("MAI", "initializeUI")
 
         setSupportActionBar(tool_bar)
+        supportActionBar?.setDisplayShowTitleEnabled(false)
+
+        tool_bar_logo.layoutParams.width = 350
+
+//        tool_bar_logo.layoutParams.height = (tool_bar.layoutParams.height * 0.3).roundToInt()
+        //        tool_bar_logo.
+        tool_bar_logo.requestLayout()
+
+//        setDisplayShowTitleEnabled(false)
 
         tab_layout.addTab(tab_layout.newTab().setText("Live"))
         tab_layout.addTab(tab_layout.newTab().setText("Catch Up"))
         tab_layout.tabGravity = TabLayout.GRAVITY_FILL
 
-        val tabsAdapter =
-            TabAdapter(supportFragmentManager, tab_layout.tabCount)
+        val tabsAdapter = TabAdapter(supportFragmentManager, tab_layout.tabCount)
         view_pager.adapter = tabsAdapter
 
         view_pager.addOnPageChangeListener(TabLayout.TabLayoutOnPageChangeListener(tab_layout))

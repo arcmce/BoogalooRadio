@@ -13,6 +13,7 @@ class TabAdapter(fm: FragmentManager, internal var tabCount: Int) :
     override fun getCount(): Int {
         return tabCount
     }
+
     override fun getItem(i: Int): Fragment? {
         when (i) {
             0 -> {return LiveFragment()}

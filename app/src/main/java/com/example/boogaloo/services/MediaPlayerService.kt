@@ -13,7 +13,9 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.os.Build
+import android.os.Handler
 import java.lang.NullPointerException
+import java.util.concurrent.TimeUnit
 
 
 class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
@@ -23,7 +25,6 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
 
     private val binder = LocalBinder()
 
-//    private lateinit var mMediaPlayer: MediaPlayer
     private var mMediaPlayer: MediaPlayer? = null
     private var radioUrl: String? = null
 
@@ -31,39 +32,37 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
 //    private var resumePosition: Int = 0
 
     private lateinit var audioManager: AudioManager
-//    private var audioFocusRequest: AudioFocusRequest? = null
     private lateinit var audioFocusRequest: AudioFocusRequest
 
     private var prepared = false
     private var playWhenReady = false
 
 
+    val delayedStopHandler = Handler()
+    private var delayedStopRunnable = Runnable {stopMedia()}
+
+
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        Log.d("MPS", "onStartCommand")
+        Log.d("MPS", "onStartCommand: " + intent.action )
 
         when (intent.action) {
             "init" -> {
-                try {
-                    radioUrl = intent.extras!!.getString("media")
-                } catch (e: NullPointerException) {
-                    stopSelf()
-                }
+                if (mMediaPlayer == null) {
+                     try {
+                        radioUrl = intent.extras!!.getString("media")
+                    } catch (e: NullPointerException) {
+                        stopSelf()
+                    }
 
-                if (!requestAudioFocus()) {
-                    stopSelf()
-                }
-
-                if (radioUrl != null && radioUrl != "") {
-                    initMediaPlayer()
+                    if (radioUrl != null && radioUrl != "") {
+                        initMediaPlayer()
+                    }
+                } else {
+                    removeDelayedStop()
                 }
             }
             "toggle_play_pause" -> togglePlayPause()
         }
-
-
-//        if (intent!!.action == "toggle_play_pause") {
-//            togglePlayPause()
-//        }
 
         return super.onStartCommand(intent, flags, startId)
     }
@@ -71,12 +70,8 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
     override fun onDestroy() {
         Log.d("MPS", "onDestroy")
         super.onDestroy()
-        if (mMediaPlayer != null) {
-            stopMedia()
-            mMediaPlayer?.release()
-
-        }
-        removeAudioFocus()
+        stopMedia()
+        removeDelayedStop()
     }
 
     override fun onBufferingUpdate(mp: MediaPlayer, percent: Int) {
@@ -113,9 +108,10 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
 
     override fun onPrepared(mp: MediaPlayer) {
         //Invoked when the media source is ready for playback.
-        Log.d("MediaPlayerService", "onPrepared")
+        Log.d("MPS", "onPrepared")
         prepared = true
         if (playWhenReady) {
+            Log.d("MPS", "onPrepared, play when ready true")
             playMedia()
         }
     }
@@ -123,29 +119,27 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
     override fun onAudioFocusChange(focusStatus: Int) {
         Log.d("MPS", "onAudioFocusChange")
         //Invoked when the audio focus of the system is updated.
+
         when (focusStatus) {
             AudioManager.AUDIOFOCUS_GAIN -> {
-                if (mMediaPlayer == null) {
-                    mMediaPlayer = MediaPlayer()
-                } else if (mMediaPlayer?.isPlaying == false) {
-                    mMediaPlayer!!.start()
-                }
+                Log.d("MPS", "AUDIOFOCUS_GAIN")
                 mMediaPlayer!!.setVolume(1.0f, 1.0f)
             }
             AudioManager.AUDIOFOCUS_LOSS -> {
-                if (mMediaPlayer?.isPlaying == true) {
-                    mMediaPlayer!!.stop()
-                }
-                mMediaPlayer!!.release()
-                mMediaPlayer = null
+                Log.d("MPS", "AUDIOFOCUS_LOSS")
+                pauseMedia()
+                delayedStopHandler.postDelayed(
+                    delayedStopRunnable,
+                    TimeUnit.SECONDS.toMillis(30)
+                )
             }
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
-                if (mMediaPlayer?.isPlaying == true) {
-                    mMediaPlayer!!.pause()
-                }
+                Log.d("MPS", "AUDIOFOCUS_LOSS_TRANSIENT")
+                pauseMedia()
 
             }
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
+                Log.d("MPS", "AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK")
                 if (mMediaPlayer?.isPlaying == true) {
                     mMediaPlayer!!.setVolume(0.1f, 0.1f)
                 }
@@ -158,7 +152,6 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
         Log.d("MPS", "requestAudioFocus")
 
         audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-
         val focusResult = if (Build.VERSION.SDK_INT >= 26) {
             Log.d("MPS", "API level: ${Build.VERSION.SDK_INT}. Running new AudioFocusRequest")
             audioFocusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN).run {
@@ -184,7 +177,6 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
         }
         //Could not gain focus
         return false
-
     }
 
     @TargetApi(Build.VERSION_CODES.O)
@@ -212,22 +204,30 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
     private fun playMedia() {
         Log.d("MPS", "playMedia")
         if (prepared) {
+
+            if (!requestAudioFocus()) {
+                stopSelf()
+            }
+
+            removeDelayedStop()
+
             mMediaPlayer!!.start()
-            Log.d("MediaPlayerService", "playMedia starting")
+            playWhenReady = false
+            Log.d("MPS", "playMedia starting")
         } else {
             playWhenReady = true
         }
-//        if (mMediaPlayer?.isPlaying == false) {
-//            mMediaPlayer!!.start()
-//        }
     }
 
     private fun stopMedia() {
         Log.d("MPS", "stopMedia")
-        if (mMediaPlayer?.isPlaying == false) {
-            mMediaPlayer?.stop()
-            prepared = false
+        mMediaPlayer?.let {
+            it.stop()
+            it.release()
         }
+        mMediaPlayer = null
+        prepared = false
+        removeAudioFocus()
     }
 
     private fun pauseMedia() {
@@ -273,6 +273,8 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
         mMediaPlayer!!.prepareAsync()
 
     }
+
+    private fun removeDelayedStop() {delayedStopHandler.removeCallbacks(delayedStopRunnable)}
 
     override fun onBind(intent: Intent): IBinder {
         Log.d("MPS", "onBind")
