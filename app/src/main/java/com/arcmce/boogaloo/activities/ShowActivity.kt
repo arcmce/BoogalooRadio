@@ -1,8 +1,8 @@
-package com.example.boogaloo.activities
+package com.arcmce.boogaloo.activities
 
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import com.example.boogaloo.R
+import com.arcmce.boogaloo.R
 import kotlinx.android.synthetic.main.activity_show.*
 
 class ShowActivity : AppCompatActivity() {

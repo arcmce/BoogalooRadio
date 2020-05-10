@@ -1,10 +1,10 @@
-package com.example.boogaloo.fragments
+package com.arcmce.boogaloo.fragments
 
 
 import android.os.Bundle
-import android.support.v4.app.Fragment
-import android.support.v7.widget.GridLayoutManager
-import android.support.v7.widget.RecyclerView
+import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -12,19 +12,19 @@ import android.view.ViewGroup
 import com.android.volley.Request
 import com.android.volley.Response
 import com.android.volley.toolbox.JsonObjectRequest
-import com.example.boogaloo.R
-import com.example.boogaloo.VolleySingleton
-import com.example.boogaloo.adapters.CatchUpAdapter
-import com.example.boogaloo.models.*
+import com.arcmce.boogaloo.R
+import com.arcmce.boogaloo.VolleySingleton
+import com.arcmce.boogaloo.adapters.CatchUpAdapter
+import com.arcmce.boogaloo.models.*
 import org.json.JSONObject
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.GsonBuilder
 import kotlinx.android.synthetic.main.catchup_layout.view.*
 
 
-class CatchUpFragment : Fragment() {
+class CatchUpFragment : androidx.fragment.app.Fragment() {
 
-    private lateinit var recyclerView: RecyclerView
+    private lateinit var recyclerView: androidx.recyclerview.widget.RecyclerView
     private lateinit var viewAdapter: CatchUpAdapter
 
     private val rootMixCloudUrl = "https://api.mixcloud.com/" // BoogalooRadio/playlists/" // ['data'][x]['name']
@@ -53,7 +53,8 @@ class CatchUpFragment : Fragment() {
 
         recyclerView = view.catch_up_recycler_view.apply {
             setHasFixedSize(true)
-            layoutManager = GridLayoutManager(activity, 2)
+            layoutManager =
+                androidx.recyclerview.widget.GridLayoutManager(activity, 2)
         }
     }
 

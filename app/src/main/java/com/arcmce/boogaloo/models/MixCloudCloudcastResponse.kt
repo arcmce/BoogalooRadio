@@ -1,4 +1,4 @@
-package com.example.boogaloo.models
+package com.arcmce.boogaloo.models
 
 import java.util.*
 import kotlin.collections.ArrayList

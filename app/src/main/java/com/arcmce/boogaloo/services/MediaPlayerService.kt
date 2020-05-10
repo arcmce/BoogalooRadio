@@ -1,6 +1,8 @@
-package com.example.boogaloo.services
+package com.arcmce.boogaloo.services
 
 import android.annotation.TargetApi
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
 import android.media.AudioManager
@@ -12,11 +14,18 @@ import java.io.IOException
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
+import android.media.session.MediaController
+import android.media.session.MediaSessionManager
 import android.os.Build
 import android.os.Handler
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import android.support.v4.media.session.MediaSessionCompat
+import com.arcmce.boogaloo.R
+import com.bumptech.glide.Glide
 import java.lang.NullPointerException
+import java.net.Inet4Address
 import java.util.concurrent.TimeUnit
-
 
 class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
     MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener,
@@ -28,19 +37,27 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
     private var mMediaPlayer: MediaPlayer? = null
     private var radioUrl: String? = null
 
-    //Used to pause/resume MediaPlayer
-//    private var resumePosition: Int = 0
-
     private lateinit var audioManager: AudioManager
     private lateinit var audioFocusRequest: AudioFocusRequest
 
     private var prepared = false
     private var playWhenReady = false
 
-
     val delayedStopHandler = Handler()
     private var delayedStopRunnable = Runnable {stopMedia()}
 
+    val ACTION_PLAY = "com.arcmce.boogaloo.ACTION_PLAY"
+    val ACTION_PAUSE = "com.arcmce.boogaloo.ACTION_PAUSE"
+
+//    private lateinit var mediaSessionManager: MediaSessionManager
+    private var mediaSessionCompat: MediaSessionCompat? = null
+//    private lateinit var transportControls: MediaController.TransportControls
+
+    private val NOTIFICATION_ID = 312
+    private val NOTIFICATION_CHANNEL = "media_player_channel"
+
+    private var currentTrack: String? = "Live"
+    private var currentTrackThumbnail: String? = ""
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         Log.d("MPS", "onStartCommand: " + intent.action )
@@ -62,15 +79,22 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
                 }
             }
             "toggle_play_pause" -> togglePlayPause()
+            "update_notification_data" -> update_notification_data(intent)
         }
 
         return super.onStartCommand(intent, flags, startId)
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+        mediaSessionCompat = MediaSessionCompat(this, "MediaService")
     }
 
     override fun onDestroy() {
         Log.d("MPS", "onDestroy")
         super.onDestroy()
         stopMedia()
+        mediaSessionCompat?.isActive = false
         removeDelayedStop()
     }
 
@@ -213,6 +237,8 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
 
             mMediaPlayer!!.start()
             playWhenReady = false
+
+            buildNotification()
             Log.d("MPS", "playMedia starting")
         } else {
             playWhenReady = true
@@ -235,17 +261,8 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
         playWhenReady = false
         if (mMediaPlayer?.isPlaying == true)  {
             mMediaPlayer!!.pause()
-//            resumePosition = mMediaPlayer.getCurrentPosition()
         }
     }
-
-//    private fun resumeMedia() {
-//        Log.d("MPS", "resumeMedia")
-//        if (mMediaPlayer?.isPlaying == false) {
-////            mMediaPlayer.seekTo(resumePosition)
-//            mMediaPlayer!!.start()
-//        }
-//    }
 
     private fun initMediaPlayer() {
         Log.d("MPS", "initMediaPlayer")
@@ -263,7 +280,6 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
         try {
             Log.d("MPS", "try set data source: $radioUrl")
             mMediaPlayer!!.setDataSource(radioUrl)
-//            mMediaPlayer.setDataSource("https://streams.radio.co/sb88c742f0/listen")
         }  catch (e: IOException) {
             Log.d("MPSE", "set data source exception")
             e.printStackTrace()
@@ -285,4 +301,56 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
         // Return this instance of LocalService so clients can call public methods
         fun getService(): MediaPlayerService = this@MediaPlayerService
     }
+
+    private fun update_notification_data(intent: Intent) {
+        currentTrack = intent.extras!!.getString("currentTrack")
+        if (currentTrack == " - ") {currentTrack == "Live"}
+        currentTrackThumbnail = intent.extras!!.getString("currentTrackThumbnail")
+        if (mMediaPlayer?.isPlaying == true)  {
+            buildNotification()
+        }
+    }
+
+    private fun buildNotification() {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val notificationManager: NotificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+            val name = getString(R.string.app_name)
+            val importance = NotificationManager.IMPORTANCE_LOW
+            NotificationChannel(NOTIFICATION_CHANNEL, name, importance).apply {
+                enableLights(false)
+                enableVibration(false)
+                notificationManager.createNotificationChannel(this)
+            }
+        }
+
+        val notification = NotificationCompat.Builder(applicationContext, "media_player_channel")
+            .setContentTitle("Boogaloo Radio")
+            .setContentText(currentTrack)
+            .setSmallIcon(R.drawable.ic_boogaloo_logo)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setChannelId(NOTIFICATION_CHANNEL)
+            .setStyle(androidx.media.app.NotificationCompat.MediaStyle()
+                .setMediaSession(mediaSessionCompat?.sessionToken))
+
+//        val futureTarget = Glide.with(this)
+//            .asBitmap()
+//            .load(currentTrackThumbnail)
+//            .submit()
+//
+//        val bitmap = futureTarget.get()
+//        notification.setLargeIcon(bitmap)
+//
+//        Glide.with(this).clear(futureTarget)
+
+        with(NotificationManagerCompat.from(this)) {
+            notify(NOTIFICATION_ID, notification.build())
+        }
+
+    }
+
+
+
 }
+

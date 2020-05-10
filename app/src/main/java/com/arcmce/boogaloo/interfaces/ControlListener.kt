@@ -1,4 +1,4 @@
-package com.example.boogaloo.interfaces
+package com.arcmce.boogaloo.interfaces
 
 interface ControlListener {
     fun playButtonClick()

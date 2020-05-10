@@ -1,10 +1,10 @@
-package com.example.boogaloo.activities
+package com.arcmce.boogaloo.activities
 
 import android.content.ServiceConnection
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.AsyncTask
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
@@ -20,12 +20,12 @@ import android.content.Context
 import android.os.IBinder
 import android.content.Intent
 import android.widget.*
-import android.support.design.widget.TabLayout
-import com.example.boogaloo.interfaces.ControlListener
-import com.example.boogaloo.services.MediaPlayerService
-import com.example.boogaloo.R
-import com.example.boogaloo.VolleySingleton
-import com.example.boogaloo.adapters.TabAdapter
+import com.google.android.material.tabs.TabLayout
+import com.arcmce.boogaloo.interfaces.ControlListener
+import com.arcmce.boogaloo.services.MediaPlayerService
+import com.arcmce.boogaloo.R
+import com.arcmce.boogaloo.VolleySingleton
+import com.arcmce.boogaloo.adapters.TabAdapter
 import kotlinx.android.synthetic.main.livelayout.*
 
 
@@ -193,12 +193,21 @@ class MainActivity : AppCompatActivity(), ControlListener {
                     "current_track").
                     get("artwork_url_large").toString()
 
+                if (strCurrentTrack == " - ") {strCurrentTrack == "Boogaloo Radio - Live"}
+
                 textViewTrack.text = strCurrentTrack
 
                 //TODO only do this if url changes
                 DownloadImageTask(imageView).execute(
                     strArtworkUrl
                 )
+
+                val playerIntent = Intent(this, MediaPlayerService::class.java)
+                playerIntent.action = "update_notification_data"
+                playerIntent.putExtra("currentTrack", strCurrentTrack)
+                playerIntent.putExtra("currentTrackThumbnail", strArtworkUrl)
+                startService(playerIntent)
+
 
             },
             Response.ErrorListener {}

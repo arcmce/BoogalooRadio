@@ -1,8 +1,8 @@
-package com.example.boogaloo.adapters
+package com.arcmce.boogaloo.adapters
 
 import android.content.Intent
-import android.support.v7.util.DiffUtil
-import android.support.v7.widget.RecyclerView
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.RecyclerView
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -10,19 +10,19 @@ import android.view.ViewGroup
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.RequestOptions
-import com.example.boogaloo.R
-import com.example.boogaloo.activities.ShowActivity
-import com.example.boogaloo.models.RecyclerItem
+import com.arcmce.boogaloo.R
+import com.arcmce.boogaloo.activities.ShowActivity
+import com.arcmce.boogaloo.models.RecyclerItem
 import kotlinx.android.synthetic.main.catchup_item_layout.view.*
 import kotlin.collections.ArrayList
 
 class CatchUpAdapter(private var dataset: ArrayList<RecyclerItem>,
                      val listener: (String) -> Unit):
-        RecyclerView.Adapter<CatchUpAdapter.ViewHolder>() {
+        androidx.recyclerview.widget.RecyclerView.Adapter<CatchUpAdapter.ViewHolder>() {
 
     val requestOptions = RequestOptions().diskCacheStrategy(DiskCacheStrategy.ALL)
 
-    class ViewHolder(itemView: View): RecyclerView.ViewHolder(itemView), View.OnClickListener {
+    class ViewHolder(itemView: View): androidx.recyclerview.widget.RecyclerView.ViewHolder(itemView), View.OnClickListener {
         val name = itemView.tv_show_name
 //        val count = itemView.tv_cloudcast_count
         val thumbnail = itemView.iv_show_thumbnail

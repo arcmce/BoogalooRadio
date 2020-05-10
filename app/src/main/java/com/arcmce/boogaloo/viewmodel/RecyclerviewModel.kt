@@ -1,4 +1,4 @@
-package com.example.boogaloo.models
+package com.arcmce.boogaloo.models
 
 data class RecyclerviewModel(
     val data: ArrayList<RecyclerItem>
