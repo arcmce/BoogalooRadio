@@ -12,6 +12,8 @@ import android.os.IBinder
 import android.util.Log
 import java.io.IOException
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.session.MediaController
@@ -23,6 +25,9 @@ import androidx.core.app.NotificationManagerCompat
 import android.support.v4.media.session.MediaSessionCompat
 import com.arcmce.boogaloo.R
 import com.bumptech.glide.Glide
+import com.bumptech.glide.request.target.CustomTarget
+import com.bumptech.glide.request.target.NotificationTarget
+import com.bumptech.glide.request.transition.Transition
 import java.lang.NullPointerException
 import java.net.Inet4Address
 import java.util.concurrent.TimeUnit
@@ -49,10 +54,11 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
     val ACTION_PLAY = "com.arcmce.boogaloo.ACTION_PLAY"
     val ACTION_PAUSE = "com.arcmce.boogaloo.ACTION_PAUSE"
 
-//    private lateinit var mediaSessionManager: MediaSessionManager
+    private lateinit var mediaSessionManager: MediaSessionManager
     private var mediaSessionCompat: MediaSessionCompat? = null
 //    private lateinit var transportControls: MediaController.TransportControls
 
+    private lateinit var notification: NotificationCompat.Builder
     private val NOTIFICATION_ID = 312
     private val NOTIFICATION_CHANNEL = "media_player_channel"
 
@@ -319,37 +325,43 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
             val name = getString(R.string.app_name)
             val importance = NotificationManager.IMPORTANCE_LOW
             NotificationChannel(NOTIFICATION_CHANNEL, name, importance).apply {
-                enableLights(false)
-                enableVibration(false)
+                setShowBadge(false)
                 notificationManager.createNotificationChannel(this)
             }
         }
 
-        val notification = NotificationCompat.Builder(applicationContext, "media_player_channel")
+        notification = NotificationCompat.Builder(applicationContext, "media_player_channel")
             .setContentTitle("Boogaloo Radio")
             .setContentText(currentTrack)
             .setSmallIcon(R.drawable.ic_boogaloo_logo)
-            .setPriority(NotificationCompat.PRIORITY_MAX)
+//            .setPriority(NotificationCompat.PRIORITY_MAX)
             .setChannelId(NOTIFICATION_CHANNEL)
             .setStyle(androidx.media.app.NotificationCompat.MediaStyle()
                 .setMediaSession(mediaSessionCompat?.sessionToken))
+            .setVibrate(longArrayOf(0))
 
-//        val futureTarget = Glide.with(this)
-//            .asBitmap()
-//            .load(currentTrackThumbnail)
-//            .submit()
-//
-//        val bitmap = futureTarget.get()
-//        notification.setLargeIcon(bitmap)
-//
-//        Glide.with(this).clear(futureTarget)
+        Glide.with(this)
+            .asBitmap()
+            .load(currentTrackThumbnail)
+            .into(object: CustomTarget<Bitmap>(){
+                override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
+                    Log.d("MPS", "glide callback")
+                    notification.setLargeIcon(resource)
+                    publishNotification()
+                }
+                override fun onLoadCleared(placeholder: Drawable?) {
+                    Log.d("MPS", "onLoadCleared has been called!")
+                }
+            })
 
+        publishNotification()
+    }
+
+    private fun publishNotification() {
         with(NotificationManagerCompat.from(this)) {
             notify(NOTIFICATION_ID, notification.build())
         }
-
     }
-
 
 
 }
