@@ -23,6 +23,7 @@ import android.os.Handler
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import android.support.v4.media.session.MediaSessionCompat
+import androidx.annotation.RequiresApi
 import com.arcmce.boogaloo.R
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
@@ -36,8 +37,6 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
     MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener,
     MediaPlayer.OnBufferingUpdateListener,
     AudioManager.OnAudioFocusChangeListener {
-
-    private val binder = LocalBinder()
 
     private var mMediaPlayer: MediaPlayer? = null
     private var radioUrl: String? = null
@@ -54,7 +53,7 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
     val ACTION_PLAY = "com.arcmce.boogaloo.ACTION_PLAY"
     val ACTION_PAUSE = "com.arcmce.boogaloo.ACTION_PAUSE"
 
-    private lateinit var mediaSessionManager: MediaSessionManager
+//    private lateinit var mediaSessionManager: MediaSessionManager
     private var mediaSessionCompat: MediaSessionCompat? = null
 //    private lateinit var transportControls: MediaController.TransportControls
 
@@ -67,6 +66,11 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         Log.d("MPS", "onStartCommand: " + intent.action )
+
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundNotification()
+        }
 
         when (intent.action) {
             "init" -> {
@@ -88,7 +92,7 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
             "update_notification_data" -> update_notification_data(intent)
         }
 
-        return super.onStartCommand(intent, flags, startId)
+        return START_NOT_STICKY
     }
 
     override fun onCreate() {
@@ -298,14 +302,8 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
 
     private fun removeDelayedStop() {delayedStopHandler.removeCallbacks(delayedStopRunnable)}
 
-    override fun onBind(intent: Intent): IBinder {
-        Log.d("MPS", "onBind")
-        return binder
-    }
-
-    inner class LocalBinder : Binder() {
-        // Return this instance of LocalService so clients can call public methods
-        fun getService(): MediaPlayerService = this@MediaPlayerService
+    override fun onBind(intent: Intent): IBinder? {
+        return null
     }
 
     private fun update_notification_data(intent: Intent) {
@@ -325,7 +323,6 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
             val name = getString(R.string.app_name)
             val importance = NotificationManager.IMPORTANCE_LOW
             NotificationChannel(NOTIFICATION_CHANNEL, name, importance).apply {
-                setShowBadge(false)
                 notificationManager.createNotificationChannel(this)
             }
         }
@@ -355,6 +352,27 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
             })
 
         publishNotification()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun startForegroundNotification() {
+        val notificationManager: NotificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        val name = getString(R.string.app_name)
+        val importance = NotificationManager.IMPORTANCE_LOW
+        NotificationChannel(NOTIFICATION_CHANNEL, name, importance).apply {
+            notificationManager.createNotificationChannel(this)
+        }
+
+        notification = NotificationCompat.Builder(applicationContext, "media_player_channel")
+            .setContentTitle("Boogaloo Radio")
+            .setSmallIcon(R.drawable.ic_boogaloo_logo)
+            .setChannelId(NOTIFICATION_CHANNEL)
+            .setStyle(androidx.media.app.NotificationCompat.MediaStyle()
+                .setMediaSession(mediaSessionCompat?.sessionToken))
+            .setVibrate(longArrayOf(0))
+
+        startForeground(NOTIFICATION_ID, notification.build())
     }
 
     private fun publishNotification() {

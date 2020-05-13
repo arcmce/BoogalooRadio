@@ -3,10 +3,7 @@ package com.arcmce.boogaloo.activities
 import android.content.ServiceConnection
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.os.AsyncTask
 import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
-import android.os.Handler
 import android.util.Log
 import com.android.volley.Request
 import com.android.volley.Response
@@ -17,8 +14,8 @@ import java.lang.Exception
 import java.net.URL
 import android.content.ComponentName
 import android.content.Context
-import android.os.IBinder
 import android.content.Intent
+import android.os.*
 import android.widget.*
 import com.google.android.material.tabs.TabLayout
 import com.arcmce.boogaloo.interfaces.ControlListener
@@ -35,9 +32,6 @@ class MainActivity : AppCompatActivity(), ControlListener {
     lateinit var networkRunnable: Runnable
 
     val radioUrl: String = "https://streams.radio.co/sb88c742f0/listen"
-
-    lateinit var playerService: MediaPlayerService
-    var serviceBound: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -77,48 +71,33 @@ class MainActivity : AppCompatActivity(), ControlListener {
 
         Log.d("MAI", "onDestroy")
 
-        if (serviceBound) {
-            unbindService(serviceConnection)
-            playerService.stopSelf()
-        }
     }
 
     override fun onResume() {
         super.onResume()
 
-        Log.d("MAI", "onResume, $serviceBound")
+        Log.d("MAI", "onResume")
 
         startUpdatingUI()
 
         initializeMediaPlayer(radioUrl)
     }
 
-    private val serviceConnection = object: ServiceConnection {
-        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            Log.d("MAI", "onServiceConnected called")
-
-            val binder = service as MediaPlayerService.LocalBinder
-            playerService = binder.getService()
-            serviceBound = true
-        }
-
-        override fun onServiceDisconnected(name: ComponentName?) {
-            Log.d("MAI", "onServiceDisconnected")
-
-            serviceBound = false
-        }
-    }
-
     fun initializeMediaPlayer(radioUrl: String) {
         Log.d("MAI", "initializeMediaPlayer")
 
-        val playerIntent = Intent(this, MediaPlayerService::class.java)
-        playerIntent.action = "init"
-        playerIntent.putExtra("media", radioUrl)
-        startService(playerIntent)
-
-        if (!serviceBound) {
-            bindService(playerIntent, serviceConnection, Context.BIND_AUTO_CREATE)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Intent(this, MediaPlayerService::class.java).apply {
+                this.action = "init"
+                this.putExtra("media", radioUrl)
+                startForegroundService(this)
+            }
+        } else {
+            Intent(this, MediaPlayerService::class.java).apply {
+                this.action = "init"
+                this.putExtra("media", radioUrl)
+                startService(this)
+            }
         }
     }
 
@@ -157,9 +136,18 @@ class MainActivity : AppCompatActivity(), ControlListener {
 
     override fun playButtonClick() {
         Log.d("MAI", "playButtonClick")
-        val playerIntent = Intent(this, MediaPlayerService::class.java)
-        playerIntent.action = "toggle_play_pause"
-        startService(playerIntent)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Intent(this, MediaPlayerService::class.java).apply {
+                this.action = "toggle_play_pause"
+                startForegroundService(this)
+            }
+        } else {
+            Intent(this, MediaPlayerService::class.java).apply {
+                this.action = "toggle_play_pause"
+                startService(this)
+            }
+        }
     }
 
     fun startUpdatingUI() {
@@ -197,16 +185,27 @@ class MainActivity : AppCompatActivity(), ControlListener {
 
                 textViewTrack.text = strCurrentTrack
 
-                //TODO only do this if url changes
                 DownloadImageTask(imageView).execute(
                     strArtworkUrl
                 )
 
-                val playerIntent = Intent(this, MediaPlayerService::class.java)
-                playerIntent.action = "update_notification_data"
-                playerIntent.putExtra("currentTrack", strCurrentTrack)
-                playerIntent.putExtra("currentTrackThumbnail", strArtworkUrl)
-                startService(playerIntent)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    Intent(this, MediaPlayerService::class.java).apply {
+                        this.action = "update_notification_data"
+                        this.putExtra("currentTrack", strCurrentTrack)
+                        this.putExtra("currentTrackThumbnail", strArtworkUrl)
+                        startForegroundService(this)
+                    }
+                } else {
+                    Intent(this, MediaPlayerService::class.java).apply {
+                        this.action = "update_notification_data"
+                        this.putExtra("currentTrack", strCurrentTrack)
+                        this.putExtra("currentTrackThumbnail", strArtworkUrl)
+                        startService(this)
+                    }
+                }
+
+
 
 
             },
