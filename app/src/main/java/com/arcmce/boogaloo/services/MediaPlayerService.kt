@@ -1,45 +1,53 @@
 package com.arcmce.boogaloo.services
 
 import android.annotation.TargetApi
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.Service
-import android.content.Intent
-import android.media.AudioManager
-import android.media.MediaPlayer
-import android.os.Binder
-import android.os.IBinder
-import android.util.Log
-import java.io.IOException
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
-import android.media.session.MediaController
-import android.media.session.MediaSessionManager
+import android.media.AudioManager
+import android.media.MediaPlayer
 import android.os.Build
+import android.os.Bundle
 import android.os.Handler
+import android.support.v4.media.MediaBrowserCompat
+import android.support.v4.media.MediaMetadataCompat
+import android.support.v4.media.session.MediaControllerCompat
+import android.support.v4.media.session.MediaSessionCompat
+import android.support.v4.media.session.PlaybackStateCompat
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import android.support.v4.media.session.MediaSessionCompat
-import androidx.annotation.RequiresApi
+import androidx.media.MediaBrowserServiceCompat
+import androidx.media.session.MediaButtonReceiver
+import com.android.volley.Request
+import com.android.volley.Response
+import com.android.volley.toolbox.StringRequest
 import com.arcmce.boogaloo.R
+import com.arcmce.boogaloo.VolleySingleton
+import com.arcmce.boogaloo.activities.MainActivity
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
-import com.bumptech.glide.request.target.NotificationTarget
 import com.bumptech.glide.request.transition.Transition
-import java.lang.NullPointerException
-import java.net.Inet4Address
+import org.json.JSONObject
+import java.io.IOException
 import java.util.concurrent.TimeUnit
 
-class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
+class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletionListener,
     MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener,
     MediaPlayer.OnBufferingUpdateListener,
     AudioManager.OnAudioFocusChangeListener {
 
+    private var isServiceStarted: Boolean = false
+
     private var mMediaPlayer: MediaPlayer? = null
-    private var radioUrl: String? = null
+    private val radioUrl: String = "https://streams.radio.co/sb88c742f0/listen"
 
     private lateinit var audioManager: AudioManager
     private lateinit var audioFocusRequest: AudioFocusRequest
@@ -47,57 +55,133 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
     private var prepared = false
     private var playWhenReady = false
 
-    val delayedStopHandler = Handler()
+    private val delayedStopHandler = Handler()
     private var delayedStopRunnable = Runnable {stopMedia()}
+
+    private val nowPlayingHandler = Handler()
+    lateinit var nowPlayingRunnable: Runnable
 
     val ACTION_PLAY = "com.arcmce.boogaloo.ACTION_PLAY"
     val ACTION_PAUSE = "com.arcmce.boogaloo.ACTION_PAUSE"
 
-//    private lateinit var mediaSessionManager: MediaSessionManager
     private var mediaSessionCompat: MediaSessionCompat? = null
-//    private lateinit var transportControls: MediaController.TransportControls
+    private lateinit var stateBuilder: PlaybackStateCompat.Builder
+    private var transportControls: MediaControllerCompat.TransportControls? = null
 
     private lateinit var notification: NotificationCompat.Builder
-    private val NOTIFICATION_ID = 312
+    private val NOTIFICATION_ID = 312 //random number
     private val NOTIFICATION_CHANNEL = "media_player_channel"
 
-    private var currentTrack: String? = "Live"
-    private var currentTrackThumbnail: String? = ""
+    private val EMPTY_MEDIA_ROOT_ID = "empty_root_id"
+
+    private fun setPlaybackState(state: Int) {
+        stateBuilder = PlaybackStateCompat.Builder()
+        if (state == PlaybackStateCompat.STATE_PLAYING) {
+            stateBuilder.setActions(
+                PlaybackStateCompat.ACTION_PAUSE
+                        or PlaybackStateCompat.ACTION_PLAY_PAUSE)
+        } else {
+            stateBuilder.setActions(
+                PlaybackStateCompat.ACTION_PAUSE
+                        or PlaybackStateCompat.ACTION_PLAY_PAUSE)
+        }
+        stateBuilder.setState(state, PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, 1F)
+        mediaSessionCompat?.setPlaybackState(stateBuilder.build())
+    }
+
+    private val mediaSessionCallbacks = object: MediaSessionCompat.Callback() {
+        override fun onPlay() {
+            if (requestAudioFocus()) {
+                startService(Intent(applicationContext, MediaPlayerService::class.java))
+                mediaSessionCompat!!.isActive = true
+                playMedia()
+
+                setPlaybackState(PlaybackStateCompat.STATE_PLAYING)
+
+                buildNotification()
+                startForeground(NOTIFICATION_ID, notification.build())
+            }
+        }
+
+        override fun onStop() {
+            stopSelf()
+            mediaSessionCompat!!.isActive = false
+            stopMedia()
+            stopForeground(true)
+        }
+
+        override fun onPause() {
+            pauseMedia()
+
+            setPlaybackState(PlaybackStateCompat.STATE_PAUSED)
+
+            buildNotification()
+            publishNotification()
+
+            stopForeground(false)
+        }
+    }
+
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         Log.d("MPS", "onStartCommand: " + intent.action )
 
+        isServiceStarted = true
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundNotification()
-        }
-
-        when (intent.action) {
-            "init" -> {
-                if (mMediaPlayer == null) {
-                     try {
-                        radioUrl = intent.extras!!.getString("media")
-                    } catch (e: NullPointerException) {
-                        stopSelf()
-                    }
-
-                    if (radioUrl != null && radioUrl != "") {
-                        initMediaPlayer()
-                    }
-                } else {
-                    removeDelayedStop()
-                }
-            }
-            "toggle_play_pause" -> togglePlayPause()
-            "update_notification_data" -> update_notification_data(intent)
-        }
+        MediaButtonReceiver.handleIntent(mediaSessionCompat, intent);
 
         return START_NOT_STICKY
     }
 
     override fun onCreate() {
         super.onCreate()
-        mediaSessionCompat = MediaSessionCompat(this, "MediaService")
+        Log.d("MPS", "onCreate")
+
+        startUpdatingUI()
+
+        initMediaPlayer()
+
+        // media session
+        mediaSessionCompat = MediaSessionCompat(this, "MediaService").apply {
+            setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS
+                    or MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS
+            )
+
+            stateBuilder = PlaybackStateCompat.Builder()
+                .setActions(PlaybackStateCompat.ACTION_PLAY or PlaybackStateCompat.ACTION_PLAY_PAUSE)
+            setPlaybackState(stateBuilder.build())
+
+            setCallback(mediaSessionCallbacks)
+
+            setSessionToken(sessionToken)
+        }
+
+        transportControls = mediaSessionCompat?.controller?.transportControls
+
+        // metadata
+        val metadataBuilder = MediaMetadataCompat.Builder().apply {
+            putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_TITLE, "Boogaloo")
+        }
+        mediaSessionCompat?.setMetadata(metadataBuilder.build())
+
+    }
+
+    override fun onLoadChildren(
+        parentId: String,
+        result: Result<MutableList<MediaBrowserCompat.MediaItem>>
+    ) {
+        if (parentId == EMPTY_MEDIA_ROOT_ID) {
+            result.sendResult(null)
+            return
+        }
+    }
+
+    override fun onGetRoot(
+        clientPackageName: String,
+        clientUid: Int,
+        rootHints: Bundle?
+    ): BrowserRoot? {
+        return MediaBrowserServiceCompat.BrowserRoot(EMPTY_MEDIA_ROOT_ID, null)
     }
 
     override fun onDestroy() {
@@ -106,6 +190,7 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
         stopMedia()
         mediaSessionCompat?.isActive = false
         removeDelayedStop()
+        removeNowPlayingHandler()
     }
 
     override fun onBufferingUpdate(mp: MediaPlayer, percent: Int) {
@@ -220,35 +305,16 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
                 audioManager.abandonAudioFocusRequest(audioFocusRequest)
     }
 
-    private fun togglePlayPause() {
-        Log.d("MPS", "togglePlayPause")
-        if (prepared) {
-            if (mMediaPlayer?.isPlaying == true) {
-                pauseMedia()
-            } else {
-                playMedia()
-            }
-        } else {
-            Log.d("MPS", "togglePlayPause playWhenReady before $playWhenReady")
-            playWhenReady = !playWhenReady
-            Log.d("MPS", "togglePlayPause playWhenReady after $playWhenReady")
-        }
-    }
-
     private fun playMedia() {
         Log.d("MPS", "playMedia")
         if (prepared) {
-
-            if (!requestAudioFocus()) {
-                stopSelf()
-            }
-
             removeDelayedStop()
 
             mMediaPlayer!!.start()
             playWhenReady = false
 
             buildNotification()
+            publishNotification()
             Log.d("MPS", "playMedia starting")
         } else {
             playWhenReady = true
@@ -302,18 +368,21 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
 
     private fun removeDelayedStop() {delayedStopHandler.removeCallbacks(delayedStopRunnable)}
 
-    override fun onBind(intent: Intent): IBinder? {
-        return null
+    private fun startUpdatingUI() {
+        Log.d("MPS", "start_updating_ui")
+
+        nowPlayingRunnable = Runnable {
+            retrieveRadioInfo()
+
+            nowPlayingHandler.postDelayed(
+                nowPlayingRunnable,
+                60000
+            )
+        }
+        nowPlayingHandler.post(nowPlayingRunnable)
     }
 
-    private fun update_notification_data(intent: Intent) {
-        currentTrack = intent.extras!!.getString("currentTrack")
-        if (currentTrack == " - ") {currentTrack == "Live"}
-        currentTrackThumbnail = intent.extras!!.getString("currentTrackThumbnail")
-        if (mMediaPlayer?.isPlaying == true)  {
-            buildNotification()
-        }
-    }
+    private fun removeNowPlayingHandler() {nowPlayingHandler.removeCallbacks(nowPlayingRunnable)}
 
     private fun buildNotification() {
 
@@ -327,19 +396,44 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
             }
         }
 
+        val metadata = mediaSessionCompat?.controller?.metadata
+//        metadata?.description?.title
+
+
+        val mainActivityIntent = Intent(this, MainActivity::class.java)
+        val contentInent = PendingIntent.getActivity(this, 0, mainActivityIntent, 0)
+
+        val playbackState = mediaSessionCompat?.controller?.playbackState
+        val playPauseIcon = if (playbackState?.state == PlaybackStateCompat.STATE_PLAYING)
+            R.drawable.ic_media_pause else R.drawable.ic_media_play
+
         notification = NotificationCompat.Builder(applicationContext, "media_player_channel")
-            .setContentTitle("Boogaloo Radio")
-            .setContentText(currentTrack)
+            .setContentTitle(metadata?.description?.title)
             .setSmallIcon(R.drawable.ic_boogaloo_logo)
 //            .setPriority(NotificationCompat.PRIORITY_MAX)
             .setChannelId(NOTIFICATION_CHANNEL)
+            .setCategory(Notification.CATEGORY_SERVICE)
             .setStyle(androidx.media.app.NotificationCompat.MediaStyle()
-                .setMediaSession(mediaSessionCompat?.sessionToken))
+                .setMediaSession(mediaSessionCompat?.sessionToken)
+                .setShowActionsInCompactView(0))
             .setVibrate(longArrayOf(0))
+            .setShowWhen(false)
+//            .setContentIntent(contentInent)
+            .setContentIntent(contentInent)
+            .addAction(
+                NotificationCompat.Action(
+                    playPauseIcon,
+                    "pause",
+                    MediaButtonReceiver.buildMediaButtonPendingIntent(
+                        this,
+                        PlaybackStateCompat.ACTION_PLAY_PAUSE
+                    )
+                )
+            )
 
         Glide.with(this)
             .asBitmap()
-            .load(currentTrackThumbnail)
+            .load(metadata?.description?.iconUri)
             .into(object: CustomTarget<Bitmap>(){
                 override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
                     Log.d("MPS", "glide callback")
@@ -351,28 +445,7 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
                 }
             })
 
-        publishNotification()
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun startForegroundNotification() {
-        val notificationManager: NotificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-        val name = getString(R.string.app_name)
-        val importance = NotificationManager.IMPORTANCE_LOW
-        NotificationChannel(NOTIFICATION_CHANNEL, name, importance).apply {
-            notificationManager.createNotificationChannel(this)
-        }
-
-        notification = NotificationCompat.Builder(applicationContext, "media_player_channel")
-            .setContentTitle("Boogaloo Radio")
-            .setSmallIcon(R.drawable.ic_boogaloo_logo)
-            .setChannelId(NOTIFICATION_CHANNEL)
-            .setStyle(androidx.media.app.NotificationCompat.MediaStyle()
-                .setMediaSession(mediaSessionCompat?.sessionToken))
-            .setVibrate(longArrayOf(0))
-
-        startForeground(NOTIFICATION_ID, notification.build())
+//        return notification
     }
 
     private fun publishNotification() {
@@ -381,6 +454,52 @@ class MediaPlayerService : Service(), MediaPlayer.OnCompletionListener,
         }
     }
 
+    private fun updateMetadata(response: String) {
+        val jsonResponse = JSONObject(response)
+        var strCurrentTrack: String = jsonResponse.getJSONObject(
+            "current_track")
+            .get("title").toString()
+        val strArtworkUrl: String = jsonResponse.getJSONObject(
+            "current_track").
+            get("artwork_url_large").toString()
+
+        if (strCurrentTrack == " - ") {strCurrentTrack = "Boogaloo Radio - Live"}
+
+
+        val metadataBuilder = MediaMetadataCompat.Builder().apply {
+            putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_TITLE, strCurrentTrack)
+            putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, strArtworkUrl)
+        }
+
+        mediaSessionCompat?.setMetadata(metadataBuilder.build())
+
+//        if
+
+        val playbackState = mediaSessionCompat?.controller?.playbackState
+        if (playbackState?.state != PlaybackStateCompat.STATE_NONE) {
+            buildNotification()
+            publishNotification()
+        }
+    }
+
+    private fun retrieveRadioInfo() {
+        Log.d("MPS", "updateRadioInfo")
+
+        val url = "https://public.radio.co/stations/sb88c742f0/status"
+
+        val stringRequest = StringRequest(
+            Request.Method.GET, url,
+            Response.Listener { response ->
+
+                updateMetadata(response)
+            },
+            Response.ErrorListener {}
+        )
+
+
+
+        VolleySingleton.getInstance(this).addToRequestQueue(stringRequest)
+    }
 
 }
 

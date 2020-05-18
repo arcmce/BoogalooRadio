@@ -1,53 +1,109 @@
 package com.arcmce.boogaloo.activities
 
-import android.content.ServiceConnection
+import android.content.ComponentName
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import androidx.appcompat.app.AppCompatActivity
+import android.os.AsyncTask
+import android.os.Bundle
+import android.support.v4.media.MediaBrowserCompat
+import android.support.v4.media.MediaMetadataCompat
+import android.support.v4.media.session.MediaControllerCompat
+import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
-import com.android.volley.Request
-import com.android.volley.Response
-import com.android.volley.toolbox.StringRequest
-import kotlinx.android.synthetic.main.activity_main.*
-import org.json.JSONObject
-import java.lang.Exception
-import java.net.URL
-import android.content.ComponentName
-import android.content.Context
-import android.content.Intent
-import android.os.*
-import android.widget.*
-import com.google.android.material.tabs.TabLayout
+import android.widget.ImageView
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import com.arcmce.boogaloo.R
+import com.arcmce.boogaloo.adapters.TabAdapter
 import com.arcmce.boogaloo.interfaces.ControlListener
 import com.arcmce.boogaloo.services.MediaPlayerService
-import com.arcmce.boogaloo.R
-import com.arcmce.boogaloo.VolleySingleton
-import com.arcmce.boogaloo.adapters.TabAdapter
+import com.bumptech.glide.Glide
+import com.google.android.material.tabs.TabLayout
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.livelayout.*
+import java.net.URL
 
 
 class MainActivity : AppCompatActivity(), ControlListener {
 
-    lateinit var handler: Handler
-    lateinit var networkRunnable: Runnable
+    private lateinit var mediaBrowser: MediaBrowserCompat
 
-    val radioUrl: String = "https://streams.radio.co/sb88c742f0/listen"
+    private val connectionCallbacks = object: MediaBrowserCompat.ConnectionCallback() {
+        override fun onConnected() {
+            Log.d("MAI", "onConnected")
+            mediaBrowser.sessionToken.also { token ->
+                val mediaController = MediaControllerCompat(
+                    this@MainActivity,
+                    token
+                )
+
+                MediaControllerCompat.setMediaController(this@MainActivity, mediaController)
+            }
+
+            buildTransportControls()
+        }
+
+        override fun onConnectionSuspended() {
+            // The Service has crashed. Disable transport controls until it automatically reconnects
+            Log.d("MAI", "onConnectionSuspended the service has crashed")
+        }
+
+        override fun onConnectionFailed() {
+            // The Service has refused our connection
+            Log.d("MAI", "onConnectionFailed: the service hasn't been able to connect")
+        }
+    }
+
+    fun buildTransportControls() {
+        val mediaController = MediaControllerCompat.getMediaController(this@MainActivity)
+
+        val metadata = mediaController.metadata
+        updateUI(metadata)
+//        val pbState = mediaController.playbackState
+
+        mediaController.registerCallback(controllerCallback)
+    }
+
+    private var controllerCallback = object: MediaControllerCompat.Callback() {
+        override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
+            super.onMetadataChanged(metadata)
+            updateUI(metadata)
+        }
+
+        override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
+//            super.onPlaybackStateChanged(state)
+        }
+    }
+
+    private fun updateUI(metadata: MediaMetadataCompat?) {
+        textViewTrack.text = metadata?.description?.title
+
+        Glide.with(applicationContext)
+            .load(metadata?.description?.iconUri)
+            .into(imageView)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         Log.d("MAI", "onCreate")
 
+        mediaBrowser = MediaBrowserCompat(
+            this,
+            ComponentName(this, MediaPlayerService::class.java),
+            connectionCallbacks,
+            null
+        )
+
         setContentView(R.layout.activity_main)
         initializeUI()
-
-        startUpdatingUI()
-
-        initializeMediaPlayer(radioUrl)
     }
 
     override fun onStart() {
         super.onStart()
+
+        mediaBrowser.connect()
+        Log.d("MAI", mediaBrowser.isConnected().toString())
 
         Log.d("MAI", "onStart")
     }
@@ -61,9 +117,10 @@ class MainActivity : AppCompatActivity(), ControlListener {
     override fun onStop() {
         super.onStop()
 
+        mediaBrowser.disconnect()
+
         Log.d("MAI", "onStop")
 
-        handler.removeCallbacks(networkRunnable)
     }
 
     override fun onDestroy() {
@@ -75,31 +132,9 @@ class MainActivity : AppCompatActivity(), ControlListener {
 
     override fun onResume() {
         super.onResume()
-
         Log.d("MAI", "onResume")
-
-        startUpdatingUI()
-
-        initializeMediaPlayer(radioUrl)
     }
 
-    fun initializeMediaPlayer(radioUrl: String) {
-        Log.d("MAI", "initializeMediaPlayer")
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Intent(this, MediaPlayerService::class.java).apply {
-                this.action = "init"
-                this.putExtra("media", radioUrl)
-                startForegroundService(this)
-            }
-        } else {
-            Intent(this, MediaPlayerService::class.java).apply {
-                this.action = "init"
-                this.putExtra("media", radioUrl)
-                startService(this)
-            }
-        }
-    }
 
     fun initializeUI() {
         Log.d("MAI", "initializeUI")
@@ -136,104 +171,14 @@ class MainActivity : AppCompatActivity(), ControlListener {
 
     override fun playButtonClick() {
         Log.d("MAI", "playButtonClick")
+        val mediaController = MediaControllerCompat.getMediaController(this@MainActivity)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Intent(this, MediaPlayerService::class.java).apply {
-                this.action = "toggle_play_pause"
-                startForegroundService(this)
-            }
+        val pbState = mediaController?.playbackState?.state
+        Log.d("MAI", "State: " + pbState.toString())
+        if (pbState == PlaybackStateCompat.STATE_PLAYING) {
+            mediaController.transportControls.pause()
         } else {
-            Intent(this, MediaPlayerService::class.java).apply {
-                this.action = "toggle_play_pause"
-                startService(this)
-            }
-        }
-    }
-
-    fun startUpdatingUI() {
-        Log.d("MAI", "start_updating_ui")
-
-        handler = Handler()
-        networkRunnable = Runnable {
-            updateRadioInfo()
-
-            handler.postDelayed(
-                networkRunnable,
-                60000
-            )
-        }
-        handler.post(networkRunnable)
-    }
-
-    fun updateRadioInfo() {
-        Log.d("MAI", "updateRadioInfo")
-
-        val url = "https://public.radio.co/stations/sb88c742f0/status"
-
-        val stringRequest = StringRequest(Request.Method.GET, url,
-            Response.Listener<String> { response ->
-
-                val jsonResponse = JSONObject(response)
-                val strCurrentTrack: String = jsonResponse.getJSONObject(
-                    "current_track")
-                    .get("title").toString()
-                val strArtworkUrl: String = jsonResponse.getJSONObject(
-                    "current_track").
-                    get("artwork_url_large").toString()
-
-                if (strCurrentTrack == " - ") {strCurrentTrack == "Boogaloo Radio - Live"}
-
-                textViewTrack.text = strCurrentTrack
-
-                DownloadImageTask(imageView).execute(
-                    strArtworkUrl
-                )
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    Intent(this, MediaPlayerService::class.java).apply {
-                        this.action = "update_notification_data"
-                        this.putExtra("currentTrack", strCurrentTrack)
-                        this.putExtra("currentTrackThumbnail", strArtworkUrl)
-                        startForegroundService(this)
-                    }
-                } else {
-                    Intent(this, MediaPlayerService::class.java).apply {
-                        this.action = "update_notification_data"
-                        this.putExtra("currentTrack", strCurrentTrack)
-                        this.putExtra("currentTrackThumbnail", strArtworkUrl)
-                        startService(this)
-                    }
-                }
-
-
-
-
-            },
-            Response.ErrorListener {}
-        )
-
-        VolleySingleton.getInstance(this).addToRequestQueue(stringRequest)
-    }
-}
-
-
-private class DownloadImageTask(internal val imageView : ImageView) : AsyncTask<String, Void, Bitmap?>() {
-    override fun doInBackground(vararg params: String?): Bitmap? {
-        val imageUrl = params[0]
-        return try {
-            val inputStream = URL(imageUrl).openStream()
-            BitmapFactory.decodeStream(inputStream)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
-    }
-
-    override fun onPostExecute(result: Bitmap?) {
-        if (result!=null) {
-            imageView.setImageBitmap(result)
-        } else {
-            Toast.makeText(imageView.context,"Error downloading",Toast.LENGTH_SHORT).show()
+            mediaController.transportControls.play()
         }
     }
 }
