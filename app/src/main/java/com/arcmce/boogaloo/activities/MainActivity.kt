@@ -18,6 +18,8 @@ import com.arcmce.boogaloo.adapters.TabAdapter
 import com.arcmce.boogaloo.interfaces.ControlListener
 import com.arcmce.boogaloo.services.MediaPlayerService
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.request.RequestOptions
 import com.google.android.material.tabs.TabLayout
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.livelayout.*
@@ -27,6 +29,8 @@ import java.net.URL
 class MainActivity : AppCompatActivity(), ControlListener {
 
     private lateinit var mediaBrowser: MediaBrowserCompat
+
+    val requestOptions = RequestOptions().diskCacheStrategy(DiskCacheStrategy.ALL)
 
     private val connectionCallbacks = object: MediaBrowserCompat.ConnectionCallback() {
         override fun onConnected() {
@@ -54,17 +58,7 @@ class MainActivity : AppCompatActivity(), ControlListener {
         }
     }
 
-    fun buildTransportControls() {
-        val mediaController = MediaControllerCompat.getMediaController(this@MainActivity)
-
-        val metadata = mediaController.metadata
-        updateUI(metadata)
-//        val pbState = mediaController.playbackState
-
-        mediaController.registerCallback(controllerCallback)
-    }
-
-    private var controllerCallback = object: MediaControllerCompat.Callback() {
+    private val controllerCallback = object: MediaControllerCompat.Callback() {
         override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
             super.onMetadataChanged(metadata)
             updateUI(metadata)
@@ -75,12 +69,14 @@ class MainActivity : AppCompatActivity(), ControlListener {
         }
     }
 
-    private fun updateUI(metadata: MediaMetadataCompat?) {
-        textViewTrack.text = metadata?.description?.title
+    fun buildTransportControls() {
+        val mediaController = MediaControllerCompat.getMediaController(this@MainActivity)
 
-        Glide.with(applicationContext)
-            .load(metadata?.description?.iconUri)
-            .into(imageView)
+        val metadata = mediaController.metadata
+        updateUI(metadata)
+//        val pbState = mediaController.playbackState
+
+        mediaController.registerCallback(controllerCallback)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -101,6 +97,8 @@ class MainActivity : AppCompatActivity(), ControlListener {
 
     override fun onStart() {
         super.onStart()
+
+        Log.d("MAI", "this sdk level: " + android.os.Build.VERSION.SDK_INT.toString())
 
         mediaBrowser.connect()
         Log.d("MAI", mediaBrowser.isConnected().toString())
@@ -167,6 +165,15 @@ class MainActivity : AppCompatActivity(), ControlListener {
             override fun onTabReselected(p0: TabLayout.Tab?) {
             }
         })
+    }
+
+    private fun updateUI(metadata: MediaMetadataCompat?) {
+        textViewTrack.text = metadata?.description?.title
+
+        Glide.with(applicationContext)
+            .load(metadata?.description?.iconUri)
+            .apply(requestOptions)
+            .into(imageView)
     }
 
     override fun playButtonClick() {

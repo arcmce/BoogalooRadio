@@ -16,6 +16,7 @@ import android.media.MediaPlayer
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.os.SystemClock.sleep
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
@@ -33,6 +34,8 @@ import com.arcmce.boogaloo.R
 import com.arcmce.boogaloo.VolleySingleton
 import com.arcmce.boogaloo.activities.MainActivity
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import org.json.JSONObject
@@ -49,7 +52,7 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
     private var mMediaPlayer: MediaPlayer? = null
     private val radioUrl: String = "https://streams.radio.co/sb88c742f0/listen"
 
-    private lateinit var audioManager: AudioManager
+    private var audioManager: AudioManager? = null
     private lateinit var audioFocusRequest: AudioFocusRequest
 
     private var prepared = false
@@ -74,6 +77,8 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
 
     private val EMPTY_MEDIA_ROOT_ID = "empty_root_id"
 
+    val requestOptions = RequestOptions().diskCacheStrategy(DiskCacheStrategy.ALL)
+
     private fun setPlaybackState(state: Int) {
         stateBuilder = PlaybackStateCompat.Builder()
         if (state == PlaybackStateCompat.STATE_PLAYING) {
@@ -91,34 +96,34 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
 
     private val mediaSessionCallbacks = object: MediaSessionCompat.Callback() {
         override fun onPlay() {
-            if (requestAudioFocus()) {
-                startService(Intent(applicationContext, MediaPlayerService::class.java))
-                mediaSessionCompat!!.isActive = true
+//            if (requestAudioFocus()) {
+//                startService(Intent(applicationContext, MediaPlayerService::class.java))
+//                mediaSessionCompat!!.isActive = true
                 playMedia()
+//
+//                setPlaybackState(PlaybackStateCompat.STATE_PLAYING)
 
-                setPlaybackState(PlaybackStateCompat.STATE_PLAYING)
-
-                buildNotification()
-                startForeground(NOTIFICATION_ID, notification.build())
-            }
+//                buildNotification()
+//                startForeground(NOTIFICATION_ID, notification.build())
+//            }
         }
 
         override fun onStop() {
-            stopSelf()
-            mediaSessionCompat!!.isActive = false
+//            stopSelf()
+//            mediaSessionCompat!!.isActive = false
             stopMedia()
-            stopForeground(true)
+//            stopForeground(true)
         }
 
         override fun onPause() {
             pauseMedia()
 
-            setPlaybackState(PlaybackStateCompat.STATE_PAUSED)
-
-            buildNotification()
-            publishNotification()
-
-            stopForeground(false)
+//            setPlaybackState(PlaybackStateCompat.STATE_PAUSED)
+//
+//            buildNotification()
+//            publishNotification()
+//
+//            stopForeground(false)
         }
     }
 
@@ -247,10 +252,6 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
             AudioManager.AUDIOFOCUS_LOSS -> {
                 Log.d("MPS", "AUDIOFOCUS_LOSS")
                 pauseMedia()
-                delayedStopHandler.postDelayed(
-                    delayedStopRunnable,
-                    TimeUnit.SECONDS.toMillis(30)
-                )
             }
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
                 Log.d("MPS", "AUDIOFOCUS_LOSS_TRANSIENT")
@@ -284,10 +285,10 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
                 build()
             }
 
-            audioManager.requestAudioFocus(audioFocusRequest)
+            audioManager?.requestAudioFocus(audioFocusRequest)
         } else {
             Log.d("MPS", "API level: ${Build.VERSION.SDK_INT}. Running deprecated AudioFocusRequest")
-            audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN)
+            audioManager?.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN)
         }
 
         if (focusResult == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
@@ -301,20 +302,35 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
     @TargetApi(Build.VERSION_CODES.O)
     private fun removeAudioFocus(): Boolean {
         Log.d("MPS", "removeAudioFocus")
+//        if (audioManager != null) {
+//        }
         return AudioManager.AUDIOFOCUS_REQUEST_GRANTED ==
-                audioManager.abandonAudioFocusRequest(audioFocusRequest)
+                audioManager?.abandonAudioFocusRequest(audioFocusRequest)
     }
 
     private fun playMedia() {
         Log.d("MPS", "playMedia")
+
+        initMediaPlayer()
+
         if (prepared) {
             removeDelayedStop()
 
-            mMediaPlayer!!.start()
-            playWhenReady = false
+            if (requestAudioFocus()) {
+                startService(Intent(applicationContext, MediaPlayerService::class.java))
+                mediaSessionCompat!!.isActive = true
 
-            buildNotification()
-            publishNotification()
+                mMediaPlayer!!.start()
+                playWhenReady = false
+
+                setPlaybackState(PlaybackStateCompat.STATE_PLAYING)
+
+                buildNotification()
+                startForeground(NOTIFICATION_ID, notification.build())
+            }
+
+//            buildNotification()
+//            publishNotification()
             Log.d("MPS", "playMedia starting")
         } else {
             playWhenReady = true
@@ -330,43 +346,58 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
         mMediaPlayer = null
         prepared = false
         removeAudioFocus()
+
+
+        stopSelf()
+        mediaSessionCompat!!.isActive = false
+//        stopMedia()
+        stopForeground(true)
     }
 
     private fun pauseMedia() {
         Log.d("MPS", "pauseMedia")
+        setPlaybackState(PlaybackStateCompat.STATE_PAUSED)
+
+        buildNotification()
+        publishNotification()
+
         playWhenReady = false
         if (mMediaPlayer?.isPlaying == true)  {
             mMediaPlayer!!.pause()
         }
+
+        stopForeground(false)
     }
 
     private fun initMediaPlayer() {
         Log.d("MPS", "initMediaPlayer")
         if (mMediaPlayer == null) {
             mMediaPlayer = MediaPlayer()
+
+            mMediaPlayer!!.setOnCompletionListener(this)
+            mMediaPlayer!!.setOnErrorListener(this)
+            mMediaPlayer!!.setOnPreparedListener(this)
+
+            //Reset so that the MediaPlayer is not pointing to another data source
+            mMediaPlayer!!.reset()
+
+            try {
+                Log.d("MPS", "try set data source: $radioUrl")
+                mMediaPlayer!!.setDataSource(radioUrl)
+            }  catch (e: IOException) {
+                Log.d("MPSE", "set data source exception")
+                e.printStackTrace()
+                stopSelf()
+            }
+            prepared = false
+            mMediaPlayer!!.prepareAsync()
+
         }
-
-        mMediaPlayer!!.setOnCompletionListener(this)
-        mMediaPlayer!!.setOnErrorListener(this)
-        mMediaPlayer!!.setOnPreparedListener(this)
-
-        //Reset so that the MediaPlayer is not pointing to another data source
-        mMediaPlayer!!.reset()
-
-        try {
-            Log.d("MPS", "try set data source: $radioUrl")
-            mMediaPlayer!!.setDataSource(radioUrl)
-        }  catch (e: IOException) {
-            Log.d("MPSE", "set data source exception")
-            e.printStackTrace()
-            stopSelf()
-        }
-        prepared = false
-        mMediaPlayer!!.prepareAsync()
-
     }
 
-    private fun removeDelayedStop() {delayedStopHandler.removeCallbacks(delayedStopRunnable)}
+    private fun removeDelayedStop() {
+        Log.d("MPS", "removeDelayedStop")
+        delayedStopHandler.removeCallbacks(delayedStopRunnable)}
 
     private fun startUpdatingUI() {
         Log.d("MPS", "start_updating_ui")
@@ -376,7 +407,7 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
 
             nowPlayingHandler.postDelayed(
                 nowPlayingRunnable,
-                60000
+                TimeUnit.SECONDS.toMillis(60)
             )
         }
         nowPlayingHandler.post(nowPlayingRunnable)
@@ -410,7 +441,6 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
         notification = NotificationCompat.Builder(applicationContext, "media_player_channel")
             .setContentTitle(metadata?.description?.title)
             .setSmallIcon(R.drawable.ic_boogaloo_logo)
-//            .setPriority(NotificationCompat.PRIORITY_MAX)
             .setChannelId(NOTIFICATION_CHANNEL)
             .setCategory(Notification.CATEGORY_SERVICE)
             .setStyle(androidx.media.app.NotificationCompat.MediaStyle()
@@ -418,7 +448,6 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
                 .setShowActionsInCompactView(0))
             .setVibrate(longArrayOf(0))
             .setShowWhen(false)
-//            .setContentIntent(contentInent)
             .setContentIntent(contentInent)
             .addAction(
                 NotificationCompat.Action(
@@ -434,6 +463,7 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
         Glide.with(this)
             .asBitmap()
             .load(metadata?.description?.iconUri)
+            .apply(requestOptions)
             .into(object: CustomTarget<Bitmap>(){
                 override fun onResourceReady(resource: Bitmap, transition: Transition<in Bitmap>?) {
                     Log.d("MPS", "glide callback")
@@ -465,7 +495,6 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
 
         if (strCurrentTrack == " - ") {strCurrentTrack = "Boogaloo Radio - Live"}
 
-
         val metadataBuilder = MediaMetadataCompat.Builder().apply {
             putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_TITLE, strCurrentTrack)
             putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, strArtworkUrl)
@@ -473,8 +502,7 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
 
         mediaSessionCompat?.setMetadata(metadataBuilder.build())
 
-//        if
-
+        // stops notification showing before the radio has first been played
         val playbackState = mediaSessionCompat?.controller?.playbackState
         if (playbackState?.state != PlaybackStateCompat.STATE_NONE) {
             buildNotification()
@@ -483,7 +511,7 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
     }
 
     private fun retrieveRadioInfo() {
-        Log.d("MPS", "updateRadioInfo")
+        Log.d("MPS", "retrieveRadioInfo")
 
         val url = "https://public.radio.co/stations/sb88c742f0/status"
 

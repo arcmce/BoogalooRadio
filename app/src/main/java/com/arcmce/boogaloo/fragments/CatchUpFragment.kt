@@ -24,7 +24,7 @@ import kotlinx.android.synthetic.main.catchup_layout.view.*
 
 class CatchUpFragment : androidx.fragment.app.Fragment() {
 
-    private lateinit var recyclerView: androidx.recyclerview.widget.RecyclerView
+    private lateinit var recyclerView: RecyclerView
     private lateinit var viewAdapter: CatchUpAdapter
 
     private val rootMixCloudUrl = "https://api.mixcloud.com/" // BoogalooRadio/playlists/" // ['data'][x]['name']
