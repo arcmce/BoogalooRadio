@@ -1,5 +1,5 @@
-package com.arcmce.boogaloo.interfaces
-
-interface ControlListener {
-    fun playButtonClick()
-}
+//package com.arcmce.boogaloo.interfaces
+//
+//interface ControlListener {
+//    fun playButtonClick()
+//}

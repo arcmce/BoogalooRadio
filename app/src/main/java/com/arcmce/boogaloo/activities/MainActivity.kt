@@ -15,7 +15,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.arcmce.boogaloo.R
 import com.arcmce.boogaloo.adapters.TabAdapter
-import com.arcmce.boogaloo.interfaces.ControlListener
+//import com.arcmce.boogaloo.interfaces.ControlListener
 import com.arcmce.boogaloo.services.MediaPlayerService
 import com.bumptech.glide.Glide
 import com.google.android.material.tabs.TabLayout
@@ -24,7 +24,8 @@ import kotlinx.android.synthetic.main.livelayout.*
 import java.net.URL
 
 
-class MainActivity : AppCompatActivity(), ControlListener {
+class MainActivity : AppCompatActivity() {
+//    class MainActivity : AppCompatActivity(), ControlListener {
 
     private lateinit var mediaBrowser: MediaBrowserCompat
 
@@ -71,6 +72,7 @@ class MainActivity : AppCompatActivity(), ControlListener {
         }
 
         override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
+
 //            super.onPlaybackStateChanged(state)
         }
     }
@@ -169,16 +171,16 @@ class MainActivity : AppCompatActivity(), ControlListener {
         })
     }
 
-    override fun playButtonClick() {
-        Log.d("MAI", "playButtonClick")
-        val mediaController = MediaControllerCompat.getMediaController(this@MainActivity)
-
-        val pbState = mediaController?.playbackState?.state
-        Log.d("MAI", "State: " + pbState.toString())
-        if (pbState == PlaybackStateCompat.STATE_PLAYING) {
-            mediaController.transportControls.pause()
-        } else {
-            mediaController.transportControls.play()
-        }
-    }
+//    override fun playButtonClick() {
+//        Log.d("MAI", "playButtonClick")
+//        val mediaController = MediaControllerCompat.getMediaController(this@MainActivity)
+//
+//        val pbState = mediaController?.playbackState?.state
+//        Log.d("MAI", "State: " + pbState.toString())
+//        if (pbState == PlaybackStateCompat.STATE_PLAYING) {
+//            mediaController.transportControls.pause()
+//        } else {
+//            mediaController.transportControls.play()
+//        }
+//    }
 }
