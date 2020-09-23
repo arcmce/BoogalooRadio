@@ -5,20 +5,22 @@ import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentPagerAdapter
 import com.arcmce.boogaloo.fragments.CatchUpFragment
 import com.arcmce.boogaloo.fragments.LiveFragment
+import com.arcmce.boogaloo.fragments.OrderingFragment
 
 
-class TabAdapter(fm: androidx.fragment.app.FragmentManager, internal var tabCount: Int) :
-    androidx.fragment.app.FragmentPagerAdapter(fm) {
+class TabAdapter(fm: FragmentManager, internal var tabCount: Int) :
+    FragmentPagerAdapter(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT) {
 
     override fun getCount(): Int {
         return tabCount
     }
 
-    override fun getItem(i: Int): androidx.fragment.app.Fragment? {
+    override fun getItem(i: Int): Fragment {
         when (i) {
             0 -> {return LiveFragment()}
             1 -> {return CatchUpFragment()}
-            else -> return null
+            2 -> {return OrderingFragment()}
         }
+        throw IllegalStateException("position $i is invalid for this viewpager")
     }
 }

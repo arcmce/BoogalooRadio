@@ -154,6 +154,7 @@ class MainActivity : AppCompatActivity() {
 
         tab_layout.addTab(tab_layout.newTab().setText("Live"))
         tab_layout.addTab(tab_layout.newTab().setText("Catch Up"))
+        tab_layout.addTab(tab_layout.newTab().setText("Ordering"))
         tab_layout.tabGravity = TabLayout.GRAVITY_FILL
 
         val tabsAdapter = TabAdapter(supportFragmentManager, tab_layout.tabCount)
