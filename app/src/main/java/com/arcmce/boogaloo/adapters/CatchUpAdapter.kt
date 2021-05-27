@@ -1,45 +1,52 @@
 package com.arcmce.boogaloo.adapters
 
-import android.content.Intent
-import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.RecyclerView
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.recyclerview.widget.DiffUtil
+import com.arcmce.boogaloo.R
+import com.arcmce.boogaloo.models.CatchupRecyclerItem
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.RequestOptions
-import com.arcmce.boogaloo.R
-import com.arcmce.boogaloo.activities.ShowActivity
-import com.arcmce.boogaloo.models.RecyclerItem
 import kotlinx.android.synthetic.main.catchup_item_layout.view.*
-import kotlin.collections.ArrayList
 
-class CatchUpAdapter(private var dataset: ArrayList<RecyclerItem>,
-                     val listener: (String) -> Unit):
+
+class CatchUpAdapter(private var dataset: ArrayList<CatchupRecyclerItem>,
+                     val cloudcastListener: (String) -> Unit,
+                     private val listener: (CatchupRecyclerItem) -> Unit):
         androidx.recyclerview.widget.RecyclerView.Adapter<CatchUpAdapter.ViewHolder>() {
 
     val requestOptions = RequestOptions().diskCacheStrategy(DiskCacheStrategy.ALL)
 
-    class ViewHolder(itemView: View): androidx.recyclerview.widget.RecyclerView.ViewHolder(itemView), View.OnClickListener {
+//    class ViewHolder(itemView: View): androidx.recyclerview.widget.RecyclerView.ViewHolder(itemView), View.OnClickListener {
+    class ViewHolder(itemView: View): androidx.recyclerview.widget.RecyclerView.ViewHolder(itemView) {
         val name = itemView.tv_show_name
 //        val count = itemView.tv_cloudcast_count
         val thumbnail = itemView.iv_show_thumbnail
         var slug: String? = null
+        var cloudcastUrlList: ArrayList<String>? = null
 
-        init {
-            itemView.setOnClickListener(this)
-        }
+//        val context = itemView.context
+//        val showCatchupShowIntent = Intent(context, ShowActivity::class.java)
 
-        override fun onClick(v: View) {
-            Log.d("CUA", "clicked item position: " + adapterPosition.toString())
-            val context = itemView.context
-            val showCatchupShowIntent = Intent(context, ShowActivity::class.java)
-            showCatchupShowIntent.putExtra("SLUG", slug)
-            context.startActivity(showCatchupShowIntent)
-        }
+//        init {
+//            itemView.setOnClickListener(this)
+//        }
 
+//        override fun onClick(v: View) {
+//            val manager: FragmentManager = (context as AppCompatActivity).supportFragmentManager
+//            val transaction = manager.beginTransaction()
+//            transaction.replace(R.id.tab_fragment, CloudcastFragment())
+////            transaction.disallowAddToBackStack()
+//            transaction.commit()
+//
+//            Log.d("CUA", "clicked item position: " + adapterPosition.toString())
+//            showCatchupShowIntent.putExtra("SLUG", slug)
+//            showCatchupShowIntent.putExtra("CLOUDCAST", cloudcastUrlList)
+//            context.startActivity(showCatchupShowIntent)
+//        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -50,15 +57,21 @@ class CatchUpAdapter(private var dataset: ArrayList<RecyclerItem>,
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        Log.d("CUA", "onBindViewHolder " + dataset[position].slug)
-        holder.name.text = dataset[position].name
+        val item = dataset[position]
+
+        Log.d("CUA", "onBindViewHolder " + item.slug)
+
+        holder.name.text = item.name
         Glide.with(holder.thumbnail.context)
-            .load(dataset[position].thumbnail)
+            .load(item.thumbnail)
             .apply(requestOptions)
             .into(holder.thumbnail)
-        holder.slug = dataset[position].slug
+        holder.slug = item.slug
+        holder.cloudcastUrlList = null
 
-        listener(dataset[position].slug)
+        cloudcastListener(item.slug)
+
+        holder.itemView.setOnClickListener { listener(item) }
 
     }
 
@@ -66,7 +79,7 @@ class CatchUpAdapter(private var dataset: ArrayList<RecyclerItem>,
         return dataset.size
     }
 
-    fun updateList(newList: ArrayList<RecyclerItem>) {
+    fun updateList(newList: ArrayList<CatchupRecyclerItem>) {
         Log.d("CUA", "updateList")
         val diffResult = DiffUtil.calculateDiff(CatchUpDiffCallback(this.dataset, newList))
         dataset = newList
@@ -81,13 +94,17 @@ class CatchUpAdapter(private var dataset: ArrayList<RecyclerItem>,
                 .load(dataset[position].thumbnail)
                 .apply(requestOptions)
                 .into(holder.thumbnail)
+            holder.cloudcastUrlList = dataset[position].url
+
+            Log.d("CUA", "onBindViewHolderUpdate")
+
         }
     }
 }
 
 class CatchUpDiffCallback(
-    private val oldDataset: ArrayList<RecyclerItem>,
-    private val newDataset: ArrayList<RecyclerItem>
+    private val oldDataset: ArrayList<CatchupRecyclerItem>,
+    private val newDataset: ArrayList<CatchupRecyclerItem>
 ): DiffUtil.Callback() {
 
     override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {

@@ -30,8 +30,9 @@ import com.android.volley.Request
 import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
 import com.arcmce.boogaloo.R
-import com.arcmce.boogaloo.VolleySingleton
+import com.arcmce.boogaloo.network.VolleySingleton
 import com.arcmce.boogaloo.activities.MainActivity
+import com.arcmce.boogaloo.network.RadioInfoRequest
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
@@ -67,6 +68,8 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
     private var mediaSessionCompat: MediaSessionCompat? = null
     private lateinit var stateBuilder: PlaybackStateCompat.Builder
     private var transportControls: MediaControllerCompat.TransportControls? = null
+
+    private lateinit var radioInfoRequest: RadioInfoRequest
 
     private lateinit var notification: NotificationCompat.Builder
     private val NOTIFICATION_ID = 312 //random number
@@ -136,6 +139,8 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
     override fun onCreate() {
         super.onCreate()
         Log.d("MPS", "onCreate")
+
+        radioInfoRequest = RadioInfoRequest(this)
 
         startUpdatingUI()
 
@@ -372,11 +377,13 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
         Log.d("MPS", "start_updating_ui")
 
         nowPlayingRunnable = Runnable {
-            retrieveRadioInfo()
+//            retrieveRadioInfo()
+
+            radioInfoRequest.getRadioInfo(::updateMetadata)
 
             nowPlayingHandler.postDelayed(
                 nowPlayingRunnable,
-                60000
+                10000
             )
         }
         nowPlayingHandler.post(nowPlayingRunnable)
@@ -455,6 +462,9 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
     }
 
     private fun updateMetadata(response: String) {
+
+        Log.d("MPS", "updateMetadata")
+
         val jsonResponse = JSONObject(response)
         var strCurrentTrack: String = jsonResponse.getJSONObject(
             "current_track")
@@ -482,24 +492,23 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
         }
     }
 
-    private fun retrieveRadioInfo() {
-        Log.d("MPS", "updateRadioInfo")
-
-        val url = "https://public.radio.co/stations/sb88c742f0/status"
-
-        val stringRequest = StringRequest(
-            Request.Method.GET, url,
-            Response.Listener { response ->
-
-                updateMetadata(response)
-            },
-            Response.ErrorListener {}
-        )
-
-
-
-        VolleySingleton.getInstance(this).addToRequestQueue(stringRequest)
-    }
+//    private fun retrieveRadioInfo() {
+//        Log.d("MPS", "retrieveRadioInfo")
+//
+//        val url = "https://public.radio.co/stations/sb88c742f0/status"
+//
+//        val stringRequest = StringRequest(
+//            Request.Method.GET, url,
+//            { response ->
+//                updateMetadata(response)
+//            },
+//            {}
+//        )
+//
+//
+//
+//        VolleySingleton.getInstance(this).addToRequestQueue(stringRequest)
+//    }
 
 }
 

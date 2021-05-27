@@ -1,33 +1,35 @@
 package com.arcmce.boogaloo.activities
 
+//import com.arcmce.boogaloo.interfaces.ControlListener
 import android.content.ComponentName
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.os.AsyncTask
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
-import android.widget.ImageView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.*
 import com.arcmce.boogaloo.R
-import com.arcmce.boogaloo.adapters.TabAdapter
-//import com.arcmce.boogaloo.interfaces.ControlListener
+import com.arcmce.boogaloo.fragments.*
+import com.arcmce.boogaloo.models.CatchupRecyclerItem
+import com.arcmce.boogaloo.models.CloudcastRecyclerItem
 import com.arcmce.boogaloo.services.MediaPlayerService
 import com.bumptech.glide.Glide
-import com.google.android.material.tabs.TabLayout
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.livelayout.*
-import java.net.URL
+import kotlinx.android.synthetic.main.live_layout.*
 
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(R.layout.activity_main),
+    CatchUpFragment.CatchupListener,
+    CloudcastFragment.CloudcastListener {
 //    class MainActivity : AppCompatActivity(), ControlListener {
 
     private lateinit var mediaBrowser: MediaBrowserCompat
+
+//    lateinit var cloudcastFragmentFactory : CloudcastFragmentFactory
 
     private val connectionCallbacks = object: MediaBrowserCompat.ConnectionCallback() {
         override fun onConnected() {
@@ -67,6 +69,8 @@ class MainActivity : AppCompatActivity() {
 
     private var controllerCallback = object: MediaControllerCompat.Callback() {
         override fun onMetadataChanged(metadata: MediaMetadataCompat?) {
+
+            Log.d("MAI", "controller callback onmetadatachanged")
             super.onMetadataChanged(metadata)
             updateUI(metadata)
         }
@@ -78,15 +82,30 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateUI(metadata: MediaMetadataCompat?) {
-        textViewTrack.text = metadata?.description?.title
+        text_view_track.text = metadata?.description?.title
 
         Glide.with(applicationContext)
             .load(metadata?.description?.iconUri)
-            .into(imageView)
+            .into(image_view)
+
+
+//        Log.d("MAI", "updateUI " + metadata?.description?.title)
+//        Log.d("MAI", "updateUI " + metadata?.description?.iconUri)
+
+
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+//        supportFragmentManager.fragmentFactory = CloudcastFragmentFactory()
+
         super.onCreate(savedInstanceState)
+
+        setSupportActionBar(tool_bar)
+        supportActionBar?.setDisplayShowTitleEnabled(false)
+
+        tool_bar_logo.layoutParams.width = 350
+
+        tool_bar_logo.requestLayout()
 
         Log.d("MAI", "onCreate")
 
@@ -97,8 +116,15 @@ class MainActivity : AppCompatActivity() {
             null
         )
 
-        setContentView(R.layout.activity_main)
-        initializeUI()
+        if (savedInstanceState == null) {
+
+            supportFragmentManager.commit {
+                setReorderingAllowed(true)
+                add<TabFragment>(R.id.fcw_main)
+            }
+        }
+
+//        setContentView(R.layout.activity_main)
     }
 
     override fun onStart() {
@@ -137,50 +163,28 @@ class MainActivity : AppCompatActivity() {
         Log.d("MAI", "onResume")
     }
 
+    override fun onItemClicked(item: CatchupRecyclerItem) {
+        Log.d("MAI", "onItemClicked " + item.slug)
 
-    fun initializeUI() {
-        Log.d("MAI", "initializeUI")
+        val fragment = CloudcastFragment.newInstance(item.slug)
 
-        setSupportActionBar(tool_bar)
-        supportActionBar?.setDisplayShowTitleEnabled(false)
+        supportFragmentManager.commit {
+            setReorderingAllowed(true)
+//            replace<CloudcastFragment>(R.id.fragment_container_view, item.slug)
+            replace(R.id.fcw_main, fragment)
+            addToBackStack(null)
+        }
 
-        tool_bar_logo.layoutParams.width = 350
-
-//        tool_bar_logo.layoutParams.height = (tool_bar.layoutParams.height * 0.3).roundToInt()
-        //        tool_bar_logo.
-        tool_bar_logo.requestLayout()
-
-//        setDisplayShowTitleEnabled(false)
-
-        tab_layout.addTab(tab_layout.newTab().setText("Live"))
-        tab_layout.addTab(tab_layout.newTab().setText("Catch Up"))
-        tab_layout.tabGravity = TabLayout.GRAVITY_FILL
-
-        val tabsAdapter = TabAdapter(supportFragmentManager, tab_layout.tabCount)
-        view_pager.adapter = tabsAdapter
-
-        view_pager.addOnPageChangeListener(TabLayout.TabLayoutOnPageChangeListener(tab_layout))
-        tab_layout.addOnTabSelectedListener(object: TabLayout.OnTabSelectedListener {
-            override fun onTabSelected(tab: TabLayout.Tab) {
-                view_pager.currentItem = tab.position
-            }
-            override fun onTabUnselected(p0: TabLayout.Tab?) {
-            }
-            override fun onTabReselected(p0: TabLayout.Tab?) {
-            }
-        })
     }
 
-//    override fun playButtonClick() {
-//        Log.d("MAI", "playButtonClick")
-//        val mediaController = MediaControllerCompat.getMediaController(this@MainActivity)
-//
-//        val pbState = mediaController?.playbackState?.state
-//        Log.d("MAI", "State: " + pbState.toString())
-//        if (pbState == PlaybackStateCompat.STATE_PLAYING) {
-//            mediaController.transportControls.pause()
-//        } else {
-//            mediaController.transportControls.play()
-//        }
-//    }
+    override fun onCloudcastItemClicked(item: CloudcastRecyclerItem) {
+        Log.d("MAI", "onItemClicked " + item)
+
+        val intent = Intent(Intent.ACTION_VIEW)
+        intent.data = Uri.parse(item.url)
+        startActivity(intent)
+
+    }
 }
+
+

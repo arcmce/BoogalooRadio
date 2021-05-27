@@ -49,7 +49,7 @@ class ControlsFragment : androidx.fragment.app.Fragment() {
     }
 
     fun buildTransportControls() {
-        val mediaController = MediaControllerCompat.getMediaController(activity!!)
+        val mediaController = MediaControllerCompat.getMediaController(requireActivity())
 
 //        val metadata = mediaController.metadata
 //        val pbState = mediaController.playbackState
@@ -81,7 +81,7 @@ class ControlsFragment : androidx.fragment.app.Fragment() {
 
         mediaBrowser = MediaBrowserCompat(
             activity,
-            ComponentName(activity!!, MediaPlayerService::class.java),
+            ComponentName(requireActivity(), MediaPlayerService::class.java),
             connectionCallbacks,
             null
         )
@@ -90,7 +90,10 @@ class ControlsFragment : androidx.fragment.app.Fragment() {
     override fun onStart() {
         super.onStart()
 
-        mediaBrowser.connect()
+        if (!mediaBrowser.isConnected) {
+            mediaBrowser.connect()
+
+        }
         Log.d("CON", mediaBrowser.isConnected().toString())
 
         Log.d("CON", "onStart")
@@ -104,8 +107,9 @@ class ControlsFragment : androidx.fragment.app.Fragment() {
 
     override fun onStop() {
         super.onStop()
+        if (mediaBrowser.isConnected) {
 
-        mediaBrowser.disconnect()
+        }
 
         Log.d("CON", "onStop")
 
@@ -135,7 +139,7 @@ class ControlsFragment : androidx.fragment.app.Fragment() {
 
     fun playButtonClick() {
         Log.d("CON", "playButtonClick")
-        val mediaController = MediaControllerCompat.getMediaController(activity!!)
+        val mediaController = MediaControllerCompat.getMediaController(requireActivity())
 
         val pbState = mediaController?.playbackState?.state
         Log.d("CON", "State: " + pbState.toString())

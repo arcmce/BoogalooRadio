@@ -1,4 +1,4 @@
-package com.arcmce.boogaloo
+package com.arcmce.boogaloo.network
 
 import android.content.Context
 import com.android.volley.Request
@@ -11,7 +11,8 @@ class VolleySingleton constructor(context: Context) {
         private var INSTANCE: VolleySingleton? = null
         fun getInstance(context: Context) =
             INSTANCE ?: synchronized(this) {
-                INSTANCE ?: VolleySingleton(context).also {
+                INSTANCE
+                    ?: VolleySingleton(context).also {
                     INSTANCE = it
                 }
             }
@@ -21,7 +22,8 @@ class VolleySingleton constructor(context: Context) {
         Volley.newRequestQueue(context.applicationContext)
     }
 
-    fun <T> addToRequestQueue(req: Request<T>) {
+    fun <T> addToRequestQueue(req: Request<T>, cache: Boolean = true) {
+        req.setShouldCache(cache)
         requestQueue.add(req)
     }
 }
