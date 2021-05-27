@@ -24,8 +24,6 @@ class CatchUpFragment : androidx.fragment.app.Fragment() {
     private lateinit var viewAdapter: CatchUpAdapter
     private lateinit var mixCloudRequest: MixCloudRequest
 
-//    private val rootMixCloudUrl = "https://api.mixcloud.com/" // BoogalooRadio/playlists/" // ['data'][x]['name']
-
     private lateinit var playlistDataset: PlaylistResponse
     private val cloudcastMap = mutableMapOf<String, CloudcastResponse>()
     private lateinit var cloudcastUrlList: ArrayList<String>
@@ -48,13 +46,6 @@ class CatchUpFragment : androidx.fragment.app.Fragment() {
             throw ClassCastException("$context must implement CatchupListener")
         }
     }
-
-//    override fun onAttach(context: Context) {
-//        super.onAttach(context)
-//        if (context is CatchupListener) {
-//            activityCallback = context
-//        }
-//    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,

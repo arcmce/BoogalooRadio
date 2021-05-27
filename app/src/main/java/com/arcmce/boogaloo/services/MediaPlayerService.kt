@@ -26,11 +26,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.media.MediaBrowserServiceCompat
 import androidx.media.session.MediaButtonReceiver
-import com.android.volley.Request
-import com.android.volley.Response
-import com.android.volley.toolbox.StringRequest
 import com.arcmce.boogaloo.R
-import com.arcmce.boogaloo.network.VolleySingleton
 import com.arcmce.boogaloo.activities.MainActivity
 import com.arcmce.boogaloo.network.RadioInfoRequest
 import com.bumptech.glide.Glide
@@ -377,8 +373,6 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
         Log.d("MPS", "start_updating_ui")
 
         nowPlayingRunnable = Runnable {
-//            retrieveRadioInfo()
-
             radioInfoRequest.getRadioInfo(::updateMetadata)
 
             nowPlayingHandler.postDelayed(
@@ -491,24 +485,6 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
             publishNotification()
         }
     }
-
-//    private fun retrieveRadioInfo() {
-//        Log.d("MPS", "retrieveRadioInfo")
-//
-//        val url = "https://public.radio.co/stations/sb88c742f0/status"
-//
-//        val stringRequest = StringRequest(
-//            Request.Method.GET, url,
-//            { response ->
-//                updateMetadata(response)
-//            },
-//            {}
-//        )
-//
-//
-//
-//        VolleySingleton.getInstance(this).addToRequestQueue(stringRequest)
-//    }
 
 }
 

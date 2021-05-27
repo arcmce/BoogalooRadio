@@ -7,12 +7,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.arcmce.boogaloo.R
-import com.arcmce.boogaloo.adapters.CatchUpAdapter
 import com.arcmce.boogaloo.adapters.CloudcastAdapter
-import com.arcmce.boogaloo.models.CatchupRecyclerItem
 import com.arcmce.boogaloo.models.CloudcastRecyclerItem
 import com.arcmce.boogaloo.models.CloudcastResponse
-import com.arcmce.boogaloo.models.PlaylistResponse
 import com.arcmce.boogaloo.network.MixCloudRequest
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.GsonBuilder
@@ -23,8 +20,6 @@ class CloudcastFragment : androidx.fragment.app.Fragment() {
     private lateinit var recyclerView: androidx.recyclerview.widget.RecyclerView
     private lateinit var viewAdapter: CloudcastAdapter
     private lateinit var mixCloudRequest: MixCloudRequest
-
-//    lateinit var slug: String?
 
     val gson = GsonBuilder()
         .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
@@ -67,7 +62,6 @@ class CloudcastFragment : androidx.fragment.app.Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.cloudcast_layout, container, false)
         val slug = arguments?.getString(ARG_SLUG)
-//        slug = requireArguments().getString(ARG_SLUG)
 
         Log.d("CCF", slug + " cloudcast fragment onCreateView")
 
@@ -109,14 +103,6 @@ class CloudcastFragment : androidx.fragment.app.Fragment() {
             activityCallback?.onCloudcastItemClicked(item)
         }
 
-
-//        viewAdapter = CatchUpAdapter(initialDataset, { slug ->
-//            mixCloudRequest.getCloudcastData(slug, ::cloudcastRequestCallback)
-//        }, { item ->
-//            Log.d("CUF", "on click callback " + item.slug)
-//            activityCallback?.onItemClicked(item)
-//        })
-//        recyclerView.adapter = viewAdapter
         recyclerView.adapter = viewAdapter
 
     }

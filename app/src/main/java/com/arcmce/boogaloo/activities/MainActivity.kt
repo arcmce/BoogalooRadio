@@ -1,6 +1,5 @@
 package com.arcmce.boogaloo.activities
 
-//import com.arcmce.boogaloo.interfaces.ControlListener
 import android.content.ComponentName
 import android.content.Intent
 import android.net.Uri
@@ -25,11 +24,8 @@ import kotlinx.android.synthetic.main.live_layout.*
 class MainActivity : AppCompatActivity(R.layout.activity_main),
     CatchUpFragment.CatchupListener,
     CloudcastFragment.CloudcastListener {
-//    class MainActivity : AppCompatActivity(), ControlListener {
 
     private lateinit var mediaBrowser: MediaBrowserCompat
-
-//    lateinit var cloudcastFragmentFactory : CloudcastFragmentFactory
 
     private val connectionCallbacks = object: MediaBrowserCompat.ConnectionCallback() {
         override fun onConnected() {
@@ -77,7 +73,6 @@ class MainActivity : AppCompatActivity(R.layout.activity_main),
 
         override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
 
-//            super.onPlaybackStateChanged(state)
         }
     }
 
@@ -88,15 +83,9 @@ class MainActivity : AppCompatActivity(R.layout.activity_main),
             .load(metadata?.description?.iconUri)
             .into(image_view)
 
-
-//        Log.d("MAI", "updateUI " + metadata?.description?.title)
-//        Log.d("MAI", "updateUI " + metadata?.description?.iconUri)
-
-
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-//        supportFragmentManager.fragmentFactory = CloudcastFragmentFactory()
 
         super.onCreate(savedInstanceState)
 

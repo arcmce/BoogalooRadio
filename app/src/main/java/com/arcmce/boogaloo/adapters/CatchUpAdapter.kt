@@ -20,33 +20,12 @@ class CatchUpAdapter(private var dataset: ArrayList<CatchupRecyclerItem>,
 
     val requestOptions = RequestOptions().diskCacheStrategy(DiskCacheStrategy.ALL)
 
-//    class ViewHolder(itemView: View): androidx.recyclerview.widget.RecyclerView.ViewHolder(itemView), View.OnClickListener {
     class ViewHolder(itemView: View): androidx.recyclerview.widget.RecyclerView.ViewHolder(itemView) {
         val name = itemView.tv_show_name
-//        val count = itemView.tv_cloudcast_count
         val thumbnail = itemView.iv_show_thumbnail
         var slug: String? = null
         var cloudcastUrlList: ArrayList<String>? = null
 
-//        val context = itemView.context
-//        val showCatchupShowIntent = Intent(context, ShowActivity::class.java)
-
-//        init {
-//            itemView.setOnClickListener(this)
-//        }
-
-//        override fun onClick(v: View) {
-//            val manager: FragmentManager = (context as AppCompatActivity).supportFragmentManager
-//            val transaction = manager.beginTransaction()
-//            transaction.replace(R.id.tab_fragment, CloudcastFragment())
-////            transaction.disallowAddToBackStack()
-//            transaction.commit()
-//
-//            Log.d("CUA", "clicked item position: " + adapterPosition.toString())
-//            showCatchupShowIntent.putExtra("SLUG", slug)
-//            showCatchupShowIntent.putExtra("CLOUDCAST", cloudcastUrlList)
-//            context.startActivity(showCatchupShowIntent)
-//        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {

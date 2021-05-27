@@ -1,29 +1,23 @@
 package com.arcmce.boogaloo.fragments
 
 import android.content.ComponentName
-import android.content.Context
 import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.arcmce.boogaloo.R
-//import com.arcmce.boogaloo.interfaces.ControlListener
 import com.arcmce.boogaloo.services.MediaPlayerService
-import com.bumptech.glide.Glide
 import kotlinx.android.synthetic.main.controls_layout.view.*
 
 
 class ControlsFragment : androidx.fragment.app.Fragment() {
 
     private lateinit var mediaBrowser: MediaBrowserCompat
-
-//    lateinit var callback: ControlListener
 
     private val connectionCallbacks = object: MediaBrowserCompat.ConnectionCallback() {
         override fun onConnected() {
@@ -114,13 +108,6 @@ class ControlsFragment : androidx.fragment.app.Fragment() {
         Log.d("CON", "onStop")
 
     }
-
-//    override fun onAttach(context: Context?) {
-//        super.onAttach(context)
-//        if (context is ControlListener) {
-//            callback = context
-//        }
-//    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,

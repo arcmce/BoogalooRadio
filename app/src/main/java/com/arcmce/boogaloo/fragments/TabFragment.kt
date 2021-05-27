@@ -5,12 +5,9 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.app.AppCompatActivity
 import com.arcmce.boogaloo.R
 import com.arcmce.boogaloo.adapters.TabAdapter
 import com.google.android.material.tabs.TabLayout
-import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.catchup_layout.view.*
 import kotlinx.android.synthetic.main.tab_layout.*
 
 class TabFragment : androidx.fragment.app.Fragment() {
@@ -35,7 +32,6 @@ class TabFragment : androidx.fragment.app.Fragment() {
         tab_layout.tabGravity = TabLayout.GRAVITY_FILL
         tab_layout.tabMode = TabLayout.MODE_FIXED
 
-//        val tabsAdapter = TabAdapter((context as AppCompatActivity).supportFragmentManager, tab_layout.tabCount)
         val tabsAdapter = TabAdapter(childFragmentManager, tab_layout.tabCount)
         view_pager.adapter = tabsAdapter
 
