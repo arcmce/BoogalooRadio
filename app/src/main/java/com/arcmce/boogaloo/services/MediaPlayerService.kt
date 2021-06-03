@@ -46,7 +46,7 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
     private var mMediaPlayer: MediaPlayer? = null
     private val radioUrl: String = "https://streams.radio.co/sb88c742f0/listen"
 
-    private lateinit var audioManager: AudioManager
+    private var audioManager: AudioManager? = null
     private lateinit var audioFocusRequest: AudioFocusRequest
 
     private var prepared = false
@@ -285,10 +285,10 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
                 build()
             }
 
-            audioManager.requestAudioFocus(audioFocusRequest)
+            audioManager!!.requestAudioFocus(audioFocusRequest)
         } else {
             Log.d("MPS", "API level: ${Build.VERSION.SDK_INT}. Running deprecated AudioFocusRequest")
-            audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN)
+            audioManager!!.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN)
         }
 
         if (focusResult == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
@@ -303,7 +303,7 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
     private fun removeAudioFocus(): Boolean {
         Log.d("MPS", "removeAudioFocus")
         return AudioManager.AUDIOFOCUS_REQUEST_GRANTED ==
-                audioManager.abandonAudioFocusRequest(audioFocusRequest)
+                audioManager?.abandonAudioFocusRequest(audioFocusRequest)
     }
 
     private fun playMedia() {
