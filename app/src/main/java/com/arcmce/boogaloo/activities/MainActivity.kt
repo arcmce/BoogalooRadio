@@ -71,16 +71,10 @@ class MainActivity : AppCompatActivity(R.layout.activity_main),
 //            super.onMetadataChanged(metadata)
         }
 
-        override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
-
-            Log.d("MAI", "onPlaybackStateChanged")
-            test()
-        }
-    }
-
-    fun test() {
-
-        Log.d("MAI", "onPlaybackStateChanged test")
+//        override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
+//
+//            Log.d("MAI", "onPlaybackStateChanged")
+//        }
     }
 
     private fun updateUI(metadata: MediaMetadataCompat?) {

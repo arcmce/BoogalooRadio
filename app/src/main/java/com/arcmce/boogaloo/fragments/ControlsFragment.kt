@@ -37,6 +37,7 @@ class ControlsFragment : androidx.fragment.app.Fragment() {
             }
 
             buildTransportControls()
+            setInitialPlaybackState()
         }
 
         override fun onConnectionSuspended() {
@@ -74,7 +75,19 @@ class ControlsFragment : androidx.fragment.app.Fragment() {
         }
     }
 
+    fun setInitialPlaybackState() {
+
+        Log.d("CON", "setInitialPlaybackState")
+
+        val mediaController = MediaControllerCompat.getMediaController(requireActivity())
+
+        updatePlayPauseButton(mediaController.playbackState)
+    }
+
     private fun updatePlayPauseButton(state: PlaybackStateCompat?) {
+
+        Log.d("CON", "updatePlayPauseButton " + state?.state.toString())
+
         val playPauseIcon = if (state?.state == PlaybackStateCompat.STATE_PLAYING)
             R.drawable.ic_media_pause else R.drawable.ic_media_play
 
@@ -112,9 +125,12 @@ class ControlsFragment : androidx.fragment.app.Fragment() {
 
     override fun onStop() {
         super.onStop()
-//        if (mediaBrowser.isConnected) {
-//
-//        }
+
+        val mediaController = MediaControllerCompat.getMediaController(requireActivity())
+
+        mediaController.unregisterCallback(controllerCallback)
+
+        mediaBrowser.disconnect()
 
         Log.d("CON", "onStop")
 
