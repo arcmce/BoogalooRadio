@@ -83,7 +83,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main),
 
         val tabFrag = supportFragmentManager.findFragmentByTag("tabfrag") as TabFragment
         metadata?.description?.iconUri?.let { it
-            tabFrag.tabsAdapter.liveFragment.updateThumbnail(it.toString())
+            tabFrag.tabsAdapter?.liveFragment?.updateThumbnail(it.toString())
         }
 
         val contFrag = supportFragmentManager.findFragmentByTag("contfrag") as ControlsFragment

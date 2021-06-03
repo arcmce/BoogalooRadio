@@ -11,7 +11,7 @@ import com.arcmce.boogaloo.fragments.LiveFragment
 class TabAdapter(fm: FragmentManager, internal var tabCount: Int) :
     FragmentPagerAdapter(fm, BEHAVIOR_RESUME_ONLY_CURRENT_FRAGMENT) {
 
-    lateinit var liveFragment: LiveFragment
+    var liveFragment: LiveFragment? = null
 
     override fun getCount(): Int {
         return tabCount

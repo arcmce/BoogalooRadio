@@ -12,7 +12,7 @@ import kotlinx.android.synthetic.main.tab_layout.*
 
 class TabFragment : androidx.fragment.app.Fragment() {
 
-    lateinit var tabsAdapter: TabAdapter
+    var tabsAdapter: TabAdapter? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
