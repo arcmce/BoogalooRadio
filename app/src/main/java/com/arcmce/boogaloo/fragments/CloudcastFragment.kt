@@ -6,11 +6,13 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.ViewModelProvider
 import com.arcmce.boogaloo.R
 import com.arcmce.boogaloo.adapters.CloudcastAdapter
 import com.arcmce.boogaloo.models.CloudcastRecyclerItem
 import com.arcmce.boogaloo.models.CloudcastResponse
 import com.arcmce.boogaloo.network.MixCloudRequest
+import com.arcmce.boogaloo.viewmodels.CloudcastViewModel
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.GsonBuilder
 import kotlinx.android.synthetic.main.catchup_layout.view.*
@@ -20,6 +22,8 @@ class CloudcastFragment : androidx.fragment.app.Fragment() {
     private lateinit var recyclerView: androidx.recyclerview.widget.RecyclerView
     private lateinit var viewAdapter: CloudcastAdapter
     private lateinit var mixCloudRequest: MixCloudRequest
+
+    private lateinit var viewModel: CloudcastViewModel
 
     val gson = GsonBuilder()
         .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
@@ -60,13 +64,19 @@ class CloudcastFragment : androidx.fragment.app.Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val view = inflater.inflate(R.layout.cloudcast_layout, container, false)
-        val slug = arguments?.getString(ARG_SLUG)
 
-        Log.d("CCF", slug + " cloudcast fragment onCreateView")
+        viewModel = ViewModelProvider(this).get(CloudcastViewModel::class.java)
+
+        val view = inflater.inflate(R.layout.cloudcast_layout, container, false)
+
+        arguments?.getString(ARG_SLUG)?.let {
+            viewModel.slug = it
+        }
+
+        Log.d("CCF", viewModel.slug + " cloudcast fragment onCreateView")
 
         mixCloudRequest = MixCloudRequest(requireContext().applicationContext)
-        mixCloudRequest.getCloudcastData(slug!!, ::cloudcastRequestCallback)
+        mixCloudRequest.getCloudcastData(viewModel.slug, ::cloudcastRequestCallback)
 
         return view
     }

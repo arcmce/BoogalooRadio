@@ -24,27 +24,32 @@ class LiveFragment : androidx.fragment.app.Fragment() {
 
         radioInfoRequest = RadioInfoRequest(requireContext().applicationContext)
 
-        radioInfoRequest.getRadioInfo(::cloudcastRequestCallback)
+        radioInfoRequest.getRadioInfo(::radioInfoRequestCallback)
 
         return inflater.inflate(R.layout.live_layout, container, false)
 
     }
 
-    fun cloudcastRequestCallback(response: String) {
+    fun radioInfoRequestCallback(response: String) {
 
         val jsonResponse = JSONObject(response)
-        val strCurrentTrack: String = jsonResponse.getJSONObject(
-            "current_track")
-            .get("title").toString()
         val strArtworkUrl: String = jsonResponse.getJSONObject(
             "current_track").
             get("artwork_url_large").toString()
 
-        text_view_track.text = strCurrentTrack
+        updateThumbnail(strArtworkUrl)
+    }
 
-        Glide.with(requireContext().applicationContext)
-            .load(strArtworkUrl)
-            .into(image_view)
+
+    fun updateThumbnail(strArtworkUrl: String) {
+
+        Log.d("LVF", "updateThumbnail")
+
+        image_view?.let {
+            Glide.with(requireContext().applicationContext)
+                .load(strArtworkUrl)
+                .into(it)
+        }
     }
 
 }

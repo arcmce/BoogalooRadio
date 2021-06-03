@@ -12,6 +12,8 @@ import kotlinx.android.synthetic.main.tab_layout.*
 
 class TabFragment : androidx.fragment.app.Fragment() {
 
+    lateinit var tabsAdapter: TabAdapter
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -32,7 +34,7 @@ class TabFragment : androidx.fragment.app.Fragment() {
         tab_layout.tabGravity = TabLayout.GRAVITY_FILL
         tab_layout.tabMode = TabLayout.MODE_FIXED
 
-        val tabsAdapter = TabAdapter(childFragmentManager, tab_layout.tabCount)
+        tabsAdapter = TabAdapter(childFragmentManager, tab_layout.tabCount)
         view_pager.adapter = tabsAdapter
 
         view_pager.addOnPageChangeListener(TabLayout.TabLayoutOnPageChangeListener(tab_layout))

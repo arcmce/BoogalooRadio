@@ -11,13 +11,19 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.arcmce.boogaloo.R
+import com.arcmce.boogaloo.network.RadioInfoRequest
 import com.arcmce.boogaloo.services.MediaPlayerService
+import com.bumptech.glide.Glide
+import kotlinx.android.synthetic.main.controls_layout.*
+import kotlinx.android.synthetic.main.controls_layout.image_view
 import kotlinx.android.synthetic.main.controls_layout.view.*
-
+import kotlinx.android.synthetic.main.live_layout.*
+import org.json.JSONObject
 
 class ControlsFragment : androidx.fragment.app.Fragment() {
 
     private lateinit var mediaBrowser: MediaBrowserCompat
+    private lateinit var radioInfoRequest: RadioInfoRequest
 
     private val connectionCallbacks = object: MediaBrowserCompat.ConnectionCallback() {
         override fun onConnected() {
@@ -45,9 +51,6 @@ class ControlsFragment : androidx.fragment.app.Fragment() {
     fun buildTransportControls() {
         val mediaController = MediaControllerCompat.getMediaController(requireActivity())
 
-//        val metadata = mediaController.metadata
-//        val pbState = mediaController.playbackState
-
         mediaController.registerCallback(controllerCallback)
     }
 
@@ -57,15 +60,23 @@ class ControlsFragment : androidx.fragment.app.Fragment() {
 
         override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
             super.onPlaybackStateChanged(state)
+            Log.d("CON", "onPlaybackStateChanged")
             updatePlayPauseButton(state)
 
+        }
+    }
+
+    fun updateShowText(title: String) {
+        Log.d("CON", "updateShowText")
+
+        text_view_track.let {
+            it.text = title
         }
     }
 
     private fun updatePlayPauseButton(state: PlaybackStateCompat?) {
         val playPauseIcon = if (state?.state == PlaybackStateCompat.STATE_PLAYING)
             R.drawable.ic_media_pause else R.drawable.ic_media_play
-
 
         view?.playButton?.setImageResource(playPauseIcon)
     }
@@ -101,9 +112,9 @@ class ControlsFragment : androidx.fragment.app.Fragment() {
 
     override fun onStop() {
         super.onStop()
-        if (mediaBrowser.isConnected) {
-
-        }
+//        if (mediaBrowser.isConnected) {
+//
+//        }
 
         Log.d("CON", "onStop")
 
@@ -116,13 +127,15 @@ class ControlsFragment : androidx.fragment.app.Fragment() {
 
         val view = inflater.inflate(R.layout.controls_layout, container, false)
 
+        radioInfoRequest = RadioInfoRequest(requireContext().applicationContext)
+        radioInfoRequest.getRadioInfo(::radioInfoRequestCallback)
+
         view.playButton.setOnClickListener {
             playButtonClick()
         }
         return view
 
     }
-
 
     fun playButtonClick() {
         Log.d("CON", "playButtonClick")
@@ -137,6 +150,17 @@ class ControlsFragment : androidx.fragment.app.Fragment() {
         } else {
             mediaController.transportControls.play()
         }
+    }
+
+    fun radioInfoRequestCallback(response: String) {
+
+        val jsonResponse = JSONObject(response)
+        val strCurrentTrack: String = jsonResponse.getJSONObject(
+            "current_track")
+            .get("title").toString()
+
+        updateShowText(strCurrentTrack)
+
     }
 
 }
