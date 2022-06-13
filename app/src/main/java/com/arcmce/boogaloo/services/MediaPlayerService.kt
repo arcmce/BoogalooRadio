@@ -410,7 +410,7 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
 
         notification = NotificationCompat.Builder(applicationContext, "media_player_channel")
             .setContentTitle(metadata?.description?.title)
-            .setSmallIcon(R.drawable.ic_boogaloo_logo)
+            .setSmallIcon(R.mipmap.ic_launcher)
 //            .setPriority(NotificationCompat.PRIORITY_MAX)
             .setChannelId(NOTIFICATION_CHANNEL)
             .setCategory(Notification.CATEGORY_SERVICE)
