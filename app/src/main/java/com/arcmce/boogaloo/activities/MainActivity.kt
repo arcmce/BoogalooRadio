@@ -9,6 +9,9 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.*
 import com.arcmce.boogaloo.R
@@ -173,14 +176,108 @@ class MainActivity : AppCompatActivity(R.layout.activity_main),
 
     }
 
+    fun launchUriIntent(uri: String) {
+
+        val intent = Intent(Intent.ACTION_VIEW)
+        intent.data = Uri.parse(uri)
+
+        if (intent.resolveActivity(packageManager) != null) {
+            startActivity(intent)
+        }
+//        startActivity(intent)
+
+    }
+
     override fun onCloudcastItemClicked(item: CloudcastRecyclerItem) {
         Log.d("MAI", "onItemClicked " + item)
 
-        val intent = Intent(Intent.ACTION_VIEW)
-        intent.data = Uri.parse(item.url)
-        startActivity(intent)
+        launchUriIntent(item.url)
+//
+//        val intent = Intent(Intent.ACTION_VIEW)
+//        intent.data = Uri.parse(item.url)
+//        startActivity(intent)
 
     }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        val inflater: MenuInflater = menuInflater
+        inflater.inflate(R.menu.boog_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        // Handle item selection
+        return when (item.itemId) {
+            R.id.website -> {
+
+                val site = "https://boogalooradio.com"
+//                val intent = Intent(Intent.ACTION_VIEW)
+//                val uri = Uri.parse(site)
+//                intent.data = uri
+//
+//                if (intent.resolveActivity(packageManager) != null) {
+//                    startActivity(intent)
+//                }
+
+                launchUriIntent(site)
+
+                true
+            }
+            R.id.instagram -> {
+
+                val instagramUsername = "theboogaloopub"
+
+//                val intent = Intent(Intent.ACTION_VIEW)
+//                val uri = Uri.parse("https://www.instagram.com/$instagramUsername")
+//                intent.data = uri
+//
+//                if (intent.resolveActivity(packageManager) != null) {
+//                    startActivity(intent)
+//                }
+
+                launchUriIntent("https://www.instagram.com/$instagramUsername")
+
+                true
+            }
+            R.id.facebook -> {
+
+                val facebookUsername = "boogaloopub"
+
+//                val intent = Intent(Intent.ACTION_VIEW)
+//                val uri = Uri.parse("https://www.facebook.com/$facebookUsername")
+//                intent.data = uri
+//
+//                if (intent.resolveActivity(packageManager) != null) {
+//                    startActivity(intent)
+//                }
+
+                launchUriIntent("https://www.facebook.com/$facebookUsername")
+
+                true
+            }
+            R.id.twitter -> {
+
+                val twitterUsername = "TheBoogaloo"
+
+//                val intent = Intent(Intent.ACTION_VIEW)
+//                val uri = Uri.parse("https://twitter.com/$twitterUsername")
+//                intent.data = uri
+//
+//                if (intent.resolveActivity(packageManager) != null) {
+//                    startActivity(intent)
+//                }
+
+                launchUriIntent("https://twitter.com/$twitterUsername")
+
+                true
+            }
+
+
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+
 }
 
 

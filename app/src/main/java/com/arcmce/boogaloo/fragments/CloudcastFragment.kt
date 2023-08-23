@@ -98,8 +98,9 @@ class CloudcastFragment : androidx.fragment.app.Fragment() {
         val cloudcastData: CloudcastResponse = gson.fromJson(response["response"].toString(), CloudcastResponse::class.java)
 
         val dataset = ArrayList<CloudcastRecyclerItem>()
+//        val sortedList = dataList.sortedBy { it.dateField }
 
-        for (playlist in cloudcastData.data.asReversed()) {
+        for (playlist in cloudcastData.data.sortedByDescending { it.createdTime }) {
             dataset.add(
                 CloudcastRecyclerItem(
                     name = playlist.name,

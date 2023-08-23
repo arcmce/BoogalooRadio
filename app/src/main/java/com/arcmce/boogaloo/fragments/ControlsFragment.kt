@@ -50,7 +50,9 @@ class ControlsFragment : androidx.fragment.app.Fragment() {
     }
 
     fun buildTransportControls() {
+        Log.d("CON", "buildTransportControls")
         val mediaController = MediaControllerCompat.getMediaController(requireActivity())
+//        val mediaController = MediaControllerCompat.getMediaController(this@)
 
         mediaController.registerCallback(controllerCallback)
     }
@@ -68,7 +70,7 @@ class ControlsFragment : androidx.fragment.app.Fragment() {
     }
 
     fun updateShowText(title: String) {
-        Log.d("CON", "updateShowText")
+//        Log.d("CON", "updateShowText")
 
         text_view_track.let {
             it.text = title
@@ -158,10 +160,10 @@ class ControlsFragment : androidx.fragment.app.Fragment() {
         val mediaController = MediaControllerCompat.getMediaController(requireActivity())
 
         val pbState = mediaController?.playbackState?.state
-        Log.d("CON", "State: " + pbState.toString())
+        Log.d("CON", "playButtonClick - current state: " + pbState.toString())
         if (pbState == PlaybackStateCompat.STATE_PLAYING) {
 
-            Log.d("CON", "State: " + pbState.toString())
+//            Log.d("CON", "State: " + pbState.toString())
             mediaController.transportControls.pause()
         } else {
             mediaController.transportControls.play()
