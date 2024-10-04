@@ -7,14 +7,16 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.arcmce.boogaloo.R
+import com.arcmce.boogaloo.databinding.LiveLayoutBinding
 import com.arcmce.boogaloo.network.RadioInfoRequest
 import com.bumptech.glide.Glide
-import kotlinx.android.synthetic.main.live_layout.*
 import org.json.JSONObject
 
 class LiveFragment : androidx.fragment.app.Fragment() {
 
     private lateinit var radioInfoRequest: RadioInfoRequest
+
+    private lateinit var binding: LiveLayoutBinding
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -22,11 +24,13 @@ class LiveFragment : androidx.fragment.app.Fragment() {
     ): View? {
         Log.d("LVF", "onCreateView")
 
+        binding = LiveLayoutBinding.inflate(layoutInflater)
+
         radioInfoRequest = RadioInfoRequest(requireContext().applicationContext)
 
         radioInfoRequest.getRadioInfo(::radioInfoRequestCallback)
 
-        return inflater.inflate(R.layout.live_layout, container, false)
+        return binding.root
 
     }
 
@@ -45,7 +49,7 @@ class LiveFragment : androidx.fragment.app.Fragment() {
 
         Log.d("LVF", "updateThumbnail")
 
-        image_view?.let {
+        binding.imageView?.let {
             Glide.with(requireContext().applicationContext)
                 .load(strArtworkUrl)
                 .into(it)

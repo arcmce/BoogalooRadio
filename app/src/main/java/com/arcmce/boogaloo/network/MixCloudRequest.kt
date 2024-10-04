@@ -18,6 +18,9 @@ class MixCloudRequest(val context: Context) {
         sendMixcloudRequest(playlistUrl, null, callback)
     }
 
+// https://api.mixcloud.com/BoogalooRadio/playlists/?limit=1000
+// https://api.mixcloud.com/BoogalooRadio/playlists//cloudcasts
+
     fun getCloudcastData(key: String, callback: (response: Map<String, Any?>) -> Unit) {
         Log.d("MCR", "request cloudcast: " + key)
 

@@ -7,20 +7,21 @@ import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
-import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.*
+import androidx.navigation.Navigation.findNavController
+import androidx.navigation.ui.setupWithNavController
 import com.arcmce.boogaloo.R
+import com.arcmce.boogaloo.databinding.ActivityMainBinding
+import com.arcmce.boogaloo.databinding.LiveLayoutBinding
 import com.arcmce.boogaloo.fragments.*
 import com.arcmce.boogaloo.models.CatchupRecyclerItem
 import com.arcmce.boogaloo.models.CloudcastRecyclerItem
 import com.arcmce.boogaloo.services.MediaPlayerService
-import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.live_layout.*
 
 
 class MainActivity : AppCompatActivity(R.layout.activity_main),
@@ -28,6 +29,9 @@ class MainActivity : AppCompatActivity(R.layout.activity_main),
     CloudcastFragment.CloudcastListener {
 
     private lateinit var mediaBrowser: MediaBrowserCompat
+
+    private lateinit var activityMainBinding: ActivityMainBinding
+//    private lateinit var i
 
     private val connectionCallbacks = object: MediaBrowserCompat.ConnectionCallback() {
         override fun onConnected() {
@@ -97,14 +101,40 @@ class MainActivity : AppCompatActivity(R.layout.activity_main),
 
         super.onCreate(savedInstanceState)
 
-        setSupportActionBar(tool_bar)
+        activityMainBinding = ActivityMainBinding.inflate(layoutInflater)
+//        val view = binding.root
+//        setContentView(view)
+//        liveLayoutBinding = LiveLayoutBinding.inflate(layoutInflater)
+
+        setSupportActionBar(activityMainBinding.toolBar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
 
-        tool_bar_logo.layoutParams.width = 350
+        activityMainBinding.toolBarLogo.layoutParams.width = 350
 
-        tool_bar_logo.requestLayout()
+        activityMainBinding.toolBarLogo.requestLayout()
 
         Log.d("MAI", "onCreate")
+
+
+
+        val navController = findNavController(activityMainBinding.navHostFragment)
+        val bottomNavigationView = activityMainBinding.bottomNavigation
+
+        bottomNavigationView.setupWithNavController(navController)
+
+        bottomNavigationView.setOnItemSelectedListener { item ->
+            when(item.itemId) {
+                R.id.item_1 -> {
+                    navController.navigate(liveFragment)
+                    true
+                }
+                R.id.item_2 -> {
+                    // Respond to navigation item 2 click
+                    true
+                }
+                else -> false
+            }
+        }
 
         mediaBrowser = MediaBrowserCompat(
             this,
@@ -118,8 +148,8 @@ class MainActivity : AppCompatActivity(R.layout.activity_main),
             Log.d("MAI", "oncreate commit")
             supportFragmentManager.commit {
                 setReorderingAllowed(true)
-                add<TabFragment>(R.id.fcv_main, "tabfrag")
-                add<ControlsFragment>(R.id.fcv_cont, "contfrag")
+                add<TabFragment>(activityMainBinding.fcvMain.id, "tabfrag")
+                add<ControlsFragment>(activityMainBinding.fcvCont.id, "contfrag")
             }
         }
     }

@@ -9,13 +9,13 @@ import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProvider
 import com.arcmce.boogaloo.R
 import com.arcmce.boogaloo.adapters.CloudcastAdapter
+import com.arcmce.boogaloo.databinding.CatchupLayoutBinding
 import com.arcmce.boogaloo.models.CloudcastRecyclerItem
 import com.arcmce.boogaloo.models.CloudcastResponse
 import com.arcmce.boogaloo.network.MixCloudRequest
 import com.arcmce.boogaloo.viewmodels.CloudcastViewModel
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.GsonBuilder
-import kotlinx.android.synthetic.main.catchup_layout.view.*
 
 class CloudcastFragment : androidx.fragment.app.Fragment() {
 
@@ -84,7 +84,8 @@ class CloudcastFragment : androidx.fragment.app.Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        recyclerView = view.catch_up_recycler_view.apply {
+        val binding = CatchupLayoutBinding.bind(view)
+        recyclerView = binding.catchUpRecyclerView.apply {
             setHasFixedSize(true)
             layoutManager =
                 androidx.recyclerview.widget.GridLayoutManager(activity, 2)

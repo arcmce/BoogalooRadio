@@ -91,6 +91,7 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
     private val mediaSessionCallbacks = object: MediaSessionCompat.Callback() {
         override fun onPlay() {
             if (requestAudioFocus()) {
+
                 startService(Intent(applicationContext, MediaPlayerService::class.java))
                 mediaSessionCompat!!.isActive = true
                 playMedia()
@@ -142,8 +143,23 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
 
         initMediaPlayer()
 
+        val mediaButtonIntent = Intent(Intent.ACTION_MEDIA_BUTTON)
+        val pendingItent = PendingIntent.getBroadcast(
+            baseContext,
+            0, mediaButtonIntent,
+            PendingIntent.FLAG_IMMUTABLE
+        )
+//
+//        mediaSession = MediaSessionCompat(baseContext, TAG, null, pendingItent).also {
+//            it.isActive = true
+//        }
+//
+//        sessionToken = mediaSession.sessionToken
+//        packageValidator = PackageValidator(this@MediaService, R.xml.allowed_media_browser_callers)
+
+
         // media session
-        mediaSessionCompat = MediaSessionCompat(this, "MediaService").apply {
+        mediaSessionCompat = MediaSessionCompat(this, "MediaService", null, pendingItent).apply {
             setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS
                     or MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS
             )
@@ -402,7 +418,12 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
 
 
         val mainActivityIntent = Intent(this, MainActivity::class.java)
-        val contentInent = PendingIntent.getActivity(this, 0, mainActivityIntent, 0)
+//        val contentInent = PendingIntent.getActivity(this, 0, mainActivityIntent, PendingIntent.FLAG_IMMUTABLE)
+        val contentIntent: PendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            PendingIntent.getActivity(this, 0, mainActivityIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        } else {
+            PendingIntent.getActivity(this, 0, mainActivityIntent, PendingIntent.FLAG_UPDATE_CURRENT)
+        }
 
         val playbackState = mediaSessionCompat?.controller?.playbackState
         val playPauseIcon = if (playbackState?.state == PlaybackStateCompat.STATE_PLAYING)
@@ -419,18 +440,18 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
                 .setShowActionsInCompactView(0))
             .setVibrate(longArrayOf(0))
             .setShowWhen(false)
-//            .setContentIntent(contentInent)
-            .setContentIntent(contentInent)
-            .addAction(
-                NotificationCompat.Action(
-                    playPauseIcon,
-                    "pause",
-                    MediaButtonReceiver.buildMediaButtonPendingIntent(
-                        this,
-                        PlaybackStateCompat.ACTION_PLAY_PAUSE
-                    )
-                )
-            )
+//            .setContentIntent(contentIntent)
+            .setContentIntent(contentIntent)
+//            .addAction(
+//                NotificationCompat.Action(
+//                    playPauseIcon,
+//                    "pause",
+//                    MediaButtonReceiver.buildMediaButtonPendingIntent(
+//                        this,
+//                        PlaybackStateCompat.ACTION_PLAY_PAUSE,
+//                    )
+//                )
+//            )
 
         Glide.with(this)
             .asBitmap()
@@ -450,9 +471,9 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
     }
 
     private fun publishNotification() {
-        with(NotificationManagerCompat.from(this)) {
-            notify(NOTIFICATION_ID, notification.build())
-        }
+//        with(NotificationManagerCompat.from(this)) {
+//            notify(NOTIFICATION_ID, notification.build())
+//        }
     }
 
     private fun updateMetadata(response: String) {
