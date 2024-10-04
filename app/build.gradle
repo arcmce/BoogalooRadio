@@ -1,71 +1,60 @@
-
 plugins {
-    id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
 }
 
-//apply plugin: 'com.android.application'
-//
-//apply plugin: 'kotlin-android'
-//
-//apply plugin: 'kotlin-android-extensions'
-
 android {
-    compileSdk 33
+    namespace = "com.arcmce.boogaloo"
+    compileSdk = 34
+
     defaultConfig {
-        applicationId "com.arcmce.boogaloo"
-        minSdkVersion 21
-        targetSdkVersion 33
-        versionCode 1
-        versionName "1.0"
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        applicationId = "com.arcmce.boogaloo"
+        minSdk = 24
+        targetSdk = 34
+        versionCode = 1
+        versionName = "1.0"
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
-    buildFeatures {
-        viewBinding = true
-    }
+
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            proguardFiles(
+                    getDefaultProguardFile("proguard-android-optimize.txt"),
+                    "proguard-rules.pro"
+            )
         }
+    }
+    buildFeatures {
+        compose = true
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
     kotlinOptions {
         jvmTarget = "1.8"
     }
-    namespace 'com.arcmce.boogaloo'
 }
-
-
 
 dependencies {
 
-    implementation 'androidx.core:core-ktx:1.10.1'
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation 'com.google.android.material:material:1.9.0'
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4"
-    implementation "com.android.volley:volley:1.2.1"
-    implementation "androidx.fragment:fragment:1.6.1"
-    implementation("androidx.fragment:fragment-ktx:1.6.1")
-    implementation 'androidx.cardview:cardview:1.0.0'
-    implementation 'com.google.code.gson:gson:2.8.9'
-    implementation 'com.github.bumptech.glide:glide:4.10.0'
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1'
-    implementation('androidx.navigation:navigation-fragment-ktx:2.6.0')
-    implementation('androidx.navigation:navigation-ui-ktx:2.6.0')
-    implementation 'androidx.work:work-runtime-ktx:2.8.1'
-    implementation 'androidx.work:work-runtime:2.8.1'
-
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-}
-
-repositories {
-    google()
-    mavenCentral()
-    gradlePluginPortal()
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.material)
+//    implementation(libs.androidx.media)
+    implementation(libs.androidx.media3.common)
+    implementation(libs.androidx.media3.session)
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.retrofit)
+    implementation(libs.gsonConverter)
+    implementation(libs.navigationCompose)
+    implementation(libs.runtimeLivedata)
+    implementation(libs.coilCompose)
+    implementation(libs.material3)
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
 }
