@@ -16,9 +16,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -44,43 +50,44 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
 
 //    val audioFocusManager = remember { AudioFocusManager(context) }
 
-    var player: Player? = null
+//    var player: Player? = null
+    var player by remember { mutableStateOf<Player?>(null) }
+
 
     // State to track whether the player is playing or not
-    var isPlaying by remember { mutableStateOf(false) }
+//    var isPlaying by remember { mutableStateOf(false) }
+    val isPlaying by sharedViewModel.isPlaying.collectAsState()
 
     val title by sharedViewModel.liveTitle.observeAsState()
 
-    // TODO make into floating (looking) object
-    // TODO actually play pause logo not button
+    LaunchedEffect(Unit) {
+        val sessionToken = SessionToken(context, ComponentName(context, PlaybackService::class.java))
+        val controllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
+        controllerFuture.addListener(
+            {
+                player = controllerFuture.get()
+                player?.addListener(
+                    object : Player.Listener {
+                        override fun onIsPlayingChanged(isPlaying: Boolean) {
+                            Log.d("PlaybackControls", "onIsPlayingChanged ${player?.playbackState}")
+                            sharedViewModel.setPlayingState(isPlaying)
+                        }
 
-    Log.d("PlaybackControls", "pre sessiontoken")
-    val sessionToken = SessionToken(context, ComponentName(context, PlaybackService::class.java))
-    Log.d("PlaybackControls", "pre controllerFuture build")
-    val controllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
-    controllerFuture.addListener(
-        {
-            Log.d("PlaybackControls", "pre controllerfuture get")
-            player = controllerFuture.get()
-
-//            player
-            player?.addListener(
-                object : Player.Listener {
-                    override fun onIsPlayingChanged(isPlaying: Boolean) {
-                        Log.d("PlaybackControls", "update playback state callback")
-                        updatePlaybackState(isPlaying)
+//                        override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+//                            Log.d("PlaybackControls.Player.Listener", "onPlayWhenReadyChanged ${playWhenReady}")
+//                        }
+//
+//                        override fun onEvents(player: Player, events: Player.Events) {
+//                            Log.d("PlaybackControls.Player.Listener", "onPlayWhenReadyChanged ${events}")
+//                        }
                     }
+                )
 
-                    private fun updatePlaybackState(playing: Boolean) {
-                        isPlaying = playing
-                    }
-                }
-            )
-        },
-        MoreExecutors.directExecutor()
-    )
-
-
+                Log.d("PlaybackControls", "controllerfuture ${player == null}")
+            },
+            MoreExecutors.directExecutor()
+        )
+    }
 
     // Top-level layout as a Row
     Row(
@@ -90,49 +97,16 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
             .padding(horizontal = 12.dp)
             .height(64.dp)
             .background(
-                color = Color.White, // Solid white background
-                shape = RoundedCornerShape(16.dp) // Adjust the corner radius as needed
-            )
-            .padding(8.dp) // Inner padding
-//            .paint(
-//                painter = painterResource(id = R.drawable.paper),
-//                contentScale = ContentScale.Crop
-//            )
-        ,
-
+                color = MaterialTheme.colorScheme.primaryContainer, // Solid white background
+                shape = RoundedCornerShape(10.dp) // Adjust the corner radius as needed
+            ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-//        Column(
-//            modifier = modifier
-//                .fillMaxHeight()
-//                .weight(1f)
-//                .padding(4.dp)
-//                .padding(end = 64.dp)
-//        ) {
-//            // Marquee text that scrolls
-//            Text(
-//                text = "Boogaloo Radio: Live",
-//                style = MaterialTheme.typography.bodyLarge,
-//                modifier = Modifier
-//                    .weight(1f),
-//                maxLines = 1, // Limit to one line
-//            )
-//            // Marquee text that scrolls
-//            Text(
-//                text = title ?: "Boogaloo Radio",
-//                style = MaterialTheme.typography.bodyLarge,
-//                modifier = Modifier
-//                    .weight(1f) // Make the text take up available space
-////                    .padding(16.dp) // Add padding between text and button
-//                    .basicMarquee(), // Add marquee scrolling
-//                maxLines = 1, // Limit to one line
-//                overflow = TextOverflow.Ellipsis // Fallback for no marquee support
-//            )
-//        }
         Text(
             text = title ?: "Boogaloo Radio",
             style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
             modifier = Modifier
                 .weight(1f) // Make the text take up available space
                 .padding(16.dp) // Add padding between text and button
@@ -141,83 +115,35 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
             overflow = TextOverflow.Ellipsis // Fallback for no marquee support
         )
 
-        // Play/Pause button aligned to the right
-        PlayPauseButton(
-            isPlaying = isPlaying,
-            onPlayPauseToggle = {
-                if (isPlaying) {
-                    player?.pause()
-//                    audioFocusManager.abandonAudioFocus()
-                    Log.d("PlaybackControls", "Stopping playback")
-                    isPlaying = !isPlaying // Toggle playback state
-                } else {
-//                    if (audioFocusManager.requestAudioFocus()) {
-                        player?.seekToDefaultPosition()
-                        player?.play()
-                        Log.d("PlaybackControls", "Starting playback")
-                        isPlaying = !isPlaying // Toggle playback state
-//                    }
-                }
+        IconButton(onClick = {
+            if (isPlaying) {
+                Log.d("PlaybackControls", "${player == null}")
+                player?.pause()
+                Log.d("PlaybackControls", "Pausing playback")
+            } else {
+                Log.d("PlaybackControls", "${player == null}")
+                player?.seekToDefaultPosition()
+                player?.play()
+                Log.d("PlaybackControls", "Starting playback")
             }
-        )
+        }) {
+            if (isPlaying) {
+                Log.d("PlaybackControls", "is playing, icon changing to play")
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_media_pause),
+                    contentDescription = "Pause button",
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer)
+            } else {
+                Log.d("PlaybackControls", "is paused, icon changing to pause")
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_media_play),
+                    contentDescription = "Play button",
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer)
+            }
+
+        }
     }
-
 }
-//        // Play/Pause button
-//        Button(onClick = {
-//            if (isPlaying) {
-////                stopPlaybackService(context)
-//                player.pause()
-//                Log.d("PlaybackControls", "Stopping playback")
-//            } else {
-////                startPlaybackService(context)
-//                player.seekToDefaultPosition()
-//                player.play()
-//                Log.d("PlaybackControls", "Starting playback")
-//            }
-//            isPlaying = !isPlaying // Toggle playback state
-//        }) {
-//
-//        }
-
-//        Button(onClick = {
-//            val mediaItem = MediaItem.Builder()
-//                .setUri(AppConstants.RADIO_STREAM_URL)
-//                .setMediaMetadata(
-//                    MediaMetadata.Builder()
-//                        .setTitle("")
-//                        .setArtist(title)
-////                            .setArtworkUri()
-//                        .build()
-//                )
-//                .build()
-//
-//            // Update the player with the new media item
-//            player.replaceMediaItem(0, mediaItem)
-//        }) {
-//            Text("update")
-//        }
-//
-//        Button(onClick = {
-//            player.seekToDefaultPosition()
-//            player.play()
-////            player.seekBack()
-//        }) {
-//            Text("play from live")
-//        }
-//
-//        Button(onClick = {
-//            Log.d("PlaybackControls", "${player.totalBufferedDuration}")
-//            player.seekForward()
-//            Log.d("PlaybackControls", "${player.totalBufferedDuration}")
-////            player.seekBack()
-//        }) {
-//            Text("misc")
-//        }
-
-
-
-
 
 @Composable
 fun PlayPauseButton(
@@ -235,7 +161,7 @@ fun PlayPauseButton(
         } else {
             painterResource(id = R.drawable.ic_media_play) // Replace with your play button drawable
         }
-
+//        IconButton() { }
         Image(
             painter = icon,
             contentDescription = if (isPlaying) "Pause" else "Play",

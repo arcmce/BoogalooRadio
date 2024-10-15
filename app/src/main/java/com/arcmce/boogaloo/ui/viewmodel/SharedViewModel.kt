@@ -9,6 +9,13 @@ import kotlinx.coroutines.flow.StateFlow
 
 class SharedViewModel : ViewModel() {
 
+    private val _isPlaying = MutableStateFlow(false)
+    val isPlaying: StateFlow<Boolean> = _isPlaying
+
+    fun setPlayingState(isPlaying: Boolean) {
+        _isPlaying.value = isPlaying
+    }
+
     private val _liveTitle = MutableLiveData<String?>()
     val liveTitle: LiveData<String?> get() = _liveTitle
 
