@@ -6,15 +6,16 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.arcmce.boogaloo.R
+import com.arcmce.boogaloo.databinding.LiveLayoutBinding
 import com.arcmce.boogaloo.network.RadioInfoRequest
 import com.bumptech.glide.Glide
-import kotlinx.android.synthetic.main.live_layout.*
 import org.json.JSONObject
 
 class LiveFragment : androidx.fragment.app.Fragment() {
 
     private lateinit var radioInfoRequest: RadioInfoRequest
+    private var _binding: LiveLayoutBinding? = null
+    private val binding get() = _binding!!
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -22,20 +23,19 @@ class LiveFragment : androidx.fragment.app.Fragment() {
     ): View? {
         Log.d("LVF", "onCreateView")
 
-        radioInfoRequest = RadioInfoRequest(requireContext().applicationContext)
+        _binding = LiveLayoutBinding.inflate(inflater, container, false)
 
+        radioInfoRequest = RadioInfoRequest(requireContext().applicationContext)
         radioInfoRequest.getRadioInfo(::radioInfoRequestCallback)
 
-        return inflater.inflate(R.layout.live_layout, container, false)
-
+        return binding.root
     }
 
     fun radioInfoRequestCallback(response: String) {
 
         val jsonResponse = JSONObject(response)
-        val strArtworkUrl: String = jsonResponse.getJSONObject(
-            "current_track").
-            get("artwork_url_large").toString()
+        val strArtworkUrl: String = jsonResponse.getJSONObject("current_track")
+            .get("artwork_url_large").toString()
 
         updateThumbnail(strArtworkUrl)
     }
@@ -45,11 +45,15 @@ class LiveFragment : androidx.fragment.app.Fragment() {
 
         Log.d("LVF", "updateThumbnail")
 
-        image_view?.let {
+        binding.imageView.let { // Use binding to access the ImageView
             Glide.with(requireContext().applicationContext)
                 .load(strArtworkUrl)
                 .into(it)
         }
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null // Clean up binding reference
+    }
 }

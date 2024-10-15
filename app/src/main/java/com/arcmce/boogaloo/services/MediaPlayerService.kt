@@ -1,5 +1,6 @@
 package com.arcmce.boogaloo.services
 
+import android.Manifest
 import android.annotation.TargetApi
 import android.app.Notification
 import android.app.NotificationChannel
@@ -7,6 +8,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.media.AudioAttributes
@@ -22,6 +24,7 @@ import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.media.MediaBrowserServiceCompat
@@ -106,7 +109,7 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
             stopSelf()
             mediaSessionCompat!!.isActive = false
             stopMedia()
-            stopForeground(true)
+            stopForeground(STOP_FOREGROUND_REMOVE)
         }
 
         override fun onPause() {
@@ -117,7 +120,7 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
             buildNotification()
             publishNotification()
 
-            stopForeground(false)
+            stopForeground(STOP_FOREGROUND_DETACH)
         }
     }
 
@@ -401,8 +404,14 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
 //        metadata?.description?.title
 
 
-        val mainActivityIntent = Intent(this, MainActivity::class.java)
-        val contentInent = PendingIntent.getActivity(this, 0, mainActivityIntent, 0)
+//        val mainActivityIntent = Intent(this, MainActivity::class.java)
+//        val contentInent = PendingIntent.getActivity(this, 0, mainActivityIntent,
+//            PendingIntent.FLAG_IMMUTABLE)
+
+        val sessionActivityPendingIntent: PendingIntent = PendingIntent.getActivity(
+            this, 0, Intent(this, MainActivity::class.java),
+            PendingIntent.FLAG_IMMUTABLE
+        )
 
         val playbackState = mediaSessionCompat?.controller?.playbackState
         val playPauseIcon = if (playbackState?.state == PlaybackStateCompat.STATE_PLAYING)
@@ -420,17 +429,17 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
             .setVibrate(longArrayOf(0))
             .setShowWhen(false)
 //            .setContentIntent(contentInent)
-            .setContentIntent(contentInent)
-            .addAction(
-                NotificationCompat.Action(
-                    playPauseIcon,
-                    "pause",
-                    MediaButtonReceiver.buildMediaButtonPendingIntent(
-                        this,
-                        PlaybackStateCompat.ACTION_PLAY_PAUSE
-                    )
-                )
-            )
+//            .setContentIntent(sessionActivityPendingIntent)
+//            .addAction(
+//                NotificationCompat.Action(
+//                    playPauseIcon,
+//                    "pause",
+//                    MediaButtonReceiver.buildMediaButtonPendingIntent(
+//                        this,
+//                        PlaybackStateCompat.ACTION_PLAY_PAUSE
+//                    )
+//                )
+//            )
 
         Glide.with(this)
             .asBitmap()
@@ -451,6 +460,20 @@ class MediaPlayerService : MediaBrowserServiceCompat(), MediaPlayer.OnCompletion
 
     private fun publishNotification() {
         with(NotificationManagerCompat.from(this)) {
+            if (ActivityCompat.checkSelfPermission(
+                    applicationContext,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return
+            }
             notify(NOTIFICATION_ID, notification.build())
         }
     }

@@ -7,17 +7,19 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProvider
-import com.arcmce.boogaloo.R
 import com.arcmce.boogaloo.adapters.CloudcastAdapter
+import com.arcmce.boogaloo.databinding.CloudcastLayoutBinding
 import com.arcmce.boogaloo.models.CloudcastRecyclerItem
 import com.arcmce.boogaloo.models.CloudcastResponse
 import com.arcmce.boogaloo.network.MixCloudRequest
 import com.arcmce.boogaloo.viewmodels.CloudcastViewModel
 import com.google.gson.FieldNamingPolicy
 import com.google.gson.GsonBuilder
-import kotlinx.android.synthetic.main.catchup_layout.view.*
 
 class CloudcastFragment : androidx.fragment.app.Fragment() {
+
+    private var _binding: CloudcastLayoutBinding? = null
+    private val binding get() = _binding!!
 
     private lateinit var recyclerView: androidx.recyclerview.widget.RecyclerView
     private lateinit var viewAdapter: CloudcastAdapter
@@ -67,7 +69,7 @@ class CloudcastFragment : androidx.fragment.app.Fragment() {
 
         viewModel = ViewModelProvider(this).get(CloudcastViewModel::class.java)
 
-        val view = inflater.inflate(R.layout.cloudcast_layout, container, false)
+        _binding = CloudcastLayoutBinding.inflate(inflater, container, false)
 
         arguments?.getString(ARG_SLUG)?.let {
             viewModel.slug = it
@@ -78,13 +80,13 @@ class CloudcastFragment : androidx.fragment.app.Fragment() {
         mixCloudRequest = MixCloudRequest(requireContext().applicationContext)
         mixCloudRequest.getCloudcastData(viewModel.slug, ::cloudcastRequestCallback)
 
-        return view
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        recyclerView = view.catch_up_recycler_view.apply {
+        recyclerView = binding.cloudcastRecyclerView.apply {
             setHasFixedSize(true)
             layoutManager =
                 androidx.recyclerview.widget.GridLayoutManager(activity, 2)
@@ -115,6 +117,11 @@ class CloudcastFragment : androidx.fragment.app.Fragment() {
 
         recyclerView.adapter = viewAdapter
 
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null // Clean up binding reference
     }
 
 }

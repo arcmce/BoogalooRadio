@@ -9,21 +9,23 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
+import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.*
 import com.arcmce.boogaloo.R
+import com.arcmce.boogaloo.databinding.ActivityMainBinding
 import com.arcmce.boogaloo.fragments.*
 import com.arcmce.boogaloo.models.CatchupRecyclerItem
 import com.arcmce.boogaloo.models.CloudcastRecyclerItem
 import com.arcmce.boogaloo.services.MediaPlayerService
-import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.live_layout.*
 
 
 class MainActivity : AppCompatActivity(R.layout.activity_main),
     CatchUpFragment.CatchupListener,
     CloudcastFragment.CloudcastListener {
 
+    private lateinit var binding: ActivityMainBinding
     private lateinit var mediaBrowser: MediaBrowserCompat
 
     private val connectionCallbacks = object: MediaBrowserCompat.ConnectionCallback() {
@@ -94,12 +96,15 @@ class MainActivity : AppCompatActivity(R.layout.activity_main),
 
         super.onCreate(savedInstanceState)
 
-        setSupportActionBar(tool_bar)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        setSupportActionBar(binding.toolBar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
 
-        tool_bar_logo.layoutParams.width = 350
+        binding.toolBarLogo.layoutParams.width = 350
 
-        tool_bar_logo.requestLayout()
+        binding.toolBarLogo.requestLayout()
 
         Log.d("MAI", "onCreate")
 

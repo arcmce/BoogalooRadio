@@ -5,12 +5,14 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.arcmce.boogaloo.R
 import com.arcmce.boogaloo.adapters.TabAdapter
+import com.arcmce.boogaloo.databinding.TabLayoutBinding
 import com.google.android.material.tabs.TabLayout
-import kotlinx.android.synthetic.main.tab_layout.*
 
 class TabFragment : androidx.fragment.app.Fragment() {
+
+    private var _binding: TabLayoutBinding? = null
+    private val binding get() = _binding!!
 
     var tabsAdapter: TabAdapter? = null
 
@@ -18,9 +20,8 @@ class TabFragment : androidx.fragment.app.Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val view = inflater.inflate(R.layout.tab_layout, container, false)
-
-        return view
+        _binding = TabLayoutBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -29,18 +30,18 @@ class TabFragment : androidx.fragment.app.Fragment() {
         Log.d("TBF", "onViewCreated")
 
 
-        tab_layout.addTab(tab_layout.newTab().setText("Live"))
-        tab_layout.addTab(tab_layout.newTab().setText("Catch Up"))
-        tab_layout.tabGravity = TabLayout.GRAVITY_FILL
-        tab_layout.tabMode = TabLayout.MODE_FIXED
+        binding.tabLayout.addTab(binding.tabLayout.newTab().setText("Live"))
+        binding.tabLayout.addTab(binding.tabLayout.newTab().setText("Catch Up"))
+        binding.tabLayout.tabGravity = TabLayout.GRAVITY_FILL
+        binding.tabLayout.tabMode = TabLayout.MODE_FIXED
 
-        tabsAdapter = TabAdapter(childFragmentManager, tab_layout.tabCount)
-        view_pager.adapter = tabsAdapter
+        tabsAdapter = TabAdapter(childFragmentManager, binding.tabLayout.tabCount)
+        binding.viewPager.adapter = tabsAdapter
 
-        view_pager.addOnPageChangeListener(TabLayout.TabLayoutOnPageChangeListener(tab_layout))
-        tab_layout.addOnTabSelectedListener(object: TabLayout.OnTabSelectedListener {
+        binding.viewPager.addOnPageChangeListener(TabLayout.TabLayoutOnPageChangeListener(binding.tabLayout))
+        binding.tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab) {
-                view_pager.currentItem = tab.position
+                binding.viewPager.currentItem = tab.position
             }
             override fun onTabUnselected(p0: TabLayout.Tab?) {
             }

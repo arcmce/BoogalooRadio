@@ -11,16 +11,15 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.arcmce.boogaloo.R
+import com.arcmce.boogaloo.databinding.ControlsLayoutBinding
 import com.arcmce.boogaloo.network.RadioInfoRequest
 import com.arcmce.boogaloo.services.MediaPlayerService
-import com.bumptech.glide.Glide
-import kotlinx.android.synthetic.main.controls_layout.*
-import kotlinx.android.synthetic.main.controls_layout.image_view
-import kotlinx.android.synthetic.main.controls_layout.view.*
-import kotlinx.android.synthetic.main.live_layout.*
 import org.json.JSONObject
 
 class ControlsFragment : androidx.fragment.app.Fragment() {
+
+    private var _binding: ControlsLayoutBinding? = null
+    private val binding get() = _binding!!
 
     private lateinit var mediaBrowser: MediaBrowserCompat
     private lateinit var radioInfoRequest: RadioInfoRequest
@@ -70,9 +69,7 @@ class ControlsFragment : androidx.fragment.app.Fragment() {
     fun updateShowText(title: String) {
         Log.d("CON", "updateShowText")
 
-        text_view_track.let {
-            it.text = title
-        }
+        binding.textViewTrack.text = title
     }
 
     fun setInitialPlaybackState() {
@@ -91,7 +88,7 @@ class ControlsFragment : androidx.fragment.app.Fragment() {
         val playPauseIcon = if (state?.state == PlaybackStateCompat.STATE_PLAYING)
             R.drawable.ic_media_pause else R.drawable.ic_media_play
 
-        view?.playButton?.setImageResource(playPauseIcon)
+        binding.playButton.setImageResource(playPauseIcon)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -141,12 +138,12 @@ class ControlsFragment : androidx.fragment.app.Fragment() {
         savedInstanceState: Bundle?
     ): View? {
 
-        val view = inflater.inflate(R.layout.controls_layout, container, false)
+        _binding = ControlsLayoutBinding.inflate(inflater, container, false)
 
         radioInfoRequest = RadioInfoRequest(requireContext().applicationContext)
         radioInfoRequest.getRadioInfo(::radioInfoRequestCallback)
 
-        view.playButton.setOnClickListener {
+        binding.playButton.setOnClickListener {
             playButtonClick()
         }
         return view
@@ -177,6 +174,11 @@ class ControlsFragment : androidx.fragment.app.Fragment() {
 
         updateShowText(strCurrentTrack)
 
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null // Clean up binding reference
     }
 
 }

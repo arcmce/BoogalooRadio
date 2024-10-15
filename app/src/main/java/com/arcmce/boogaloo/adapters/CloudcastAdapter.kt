@@ -6,11 +6,11 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.arcmce.boogaloo.R
+import com.arcmce.boogaloo.databinding.CloudcastItemLayoutBinding
 import com.arcmce.boogaloo.models.CloudcastRecyclerItem
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.RequestOptions
-import kotlinx.android.synthetic.main.cloudcast_item_layout.view.*
 
 
 class CloudcastAdapter(private var dataset: ArrayList<CloudcastRecyclerItem>,
@@ -19,16 +19,11 @@ class CloudcastAdapter(private var dataset: ArrayList<CloudcastRecyclerItem>,
 
     val requestOptions = RequestOptions().diskCacheStrategy(DiskCacheStrategy.ALL)
 
-    class ViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
-        val name = itemView.tv_cloudcast_name
-        val thumbnail = itemView.iv_cloudcast_thumbnail
-    }
+    class ViewHolder(val binding: CloudcastItemLayoutBinding) : RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val catchupView = LayoutInflater.from(parent.context)
-            .inflate(R.layout.cloudcast_item_layout, parent, false)
-
-        return ViewHolder(catchupView)
+        val binding = CloudcastItemLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        return ViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
@@ -36,11 +31,12 @@ class CloudcastAdapter(private var dataset: ArrayList<CloudcastRecyclerItem>,
 
         Log.d("CCA", "onBindViewHolder " + item.name)
 
-        holder.name.text = item.name
-        Glide.with(holder.thumbnail.context)
+        holder.binding.tvCloudcastName.text = item.name
+
+        Glide.with(holder.binding.ivCloudcastThumbnail.context)
             .load(item.thumbnail)
             .apply(requestOptions)
-            .into(holder.thumbnail)
+            .into(holder.binding.ivCloudcastThumbnail)
 
         holder.itemView.setOnClickListener { listener(item) }
     }

@@ -6,33 +6,29 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import com.arcmce.boogaloo.R
+import com.arcmce.boogaloo.databinding.CatchupItemLayoutBinding
 import com.arcmce.boogaloo.models.CatchupRecyclerItem
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.RequestOptions
-import kotlinx.android.synthetic.main.catchup_item_layout.view.*
 
 
-class CatchUpAdapter(private var dataset: ArrayList<CatchupRecyclerItem>,
-                     val cloudcastListener: (String) -> Unit,
-                     private val listener: (CatchupRecyclerItem) -> Unit):
-        androidx.recyclerview.widget.RecyclerView.Adapter<CatchUpAdapter.ViewHolder>() {
+class CatchUpAdapter(
+     private var dataset: ArrayList<CatchupRecyclerItem>,
+     val cloudcastListener: (String) -> Unit,
+     private val listener: (CatchupRecyclerItem) -> Unit
+) : androidx.recyclerview.widget.RecyclerView.Adapter<CatchUpAdapter.ViewHolder>() {
 
     val requestOptions = RequestOptions().diskCacheStrategy(DiskCacheStrategy.ALL)
 
-    class ViewHolder(itemView: View): androidx.recyclerview.widget.RecyclerView.ViewHolder(itemView) {
-        val name = itemView.tv_show_name
-        val thumbnail = itemView.iv_show_thumbnail
+    class ViewHolder(val binding: CatchupItemLayoutBinding) : androidx.recyclerview.widget.RecyclerView.ViewHolder(binding.root) {
         var slug: String? = null
         var cloudcastUrlList: ArrayList<String>? = null
-
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val catchupView = LayoutInflater.from(parent.context)
-           .inflate(R.layout.catchup_item_layout, parent, false)
-
-        return ViewHolder(catchupView)
+        val binding = CatchupItemLayoutBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        return ViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
@@ -40,11 +36,12 @@ class CatchUpAdapter(private var dataset: ArrayList<CatchupRecyclerItem>,
 
         Log.d("CUA", "onBindViewHolder " + item.slug)
 
-        holder.name.text = item.name
-        Glide.with(holder.thumbnail.context)
+        holder.binding.tvShowName.text = item.name
+
+        Glide.with(holder.binding.ivShowThumbnail.context)
             .load(item.thumbnail)
             .apply(requestOptions)
-            .into(holder.thumbnail)
+            .into(holder.binding.ivShowThumbnail)
         holder.slug = item.slug
         holder.cloudcastUrlList = null
 
@@ -69,10 +66,10 @@ class CatchUpAdapter(private var dataset: ArrayList<CatchupRecyclerItem>,
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads)
         } else {
-            Glide.with(holder.thumbnail.context)
+            Glide.with(holder.binding.ivShowThumbnail.context)
                 .load(dataset[position].thumbnail)
                 .apply(requestOptions)
-                .into(holder.thumbnail)
+                .into(holder.binding.ivShowThumbnail)
             holder.cloudcastUrlList = dataset[position].url
 
             Log.d("CUA", "onBindViewHolderUpdate")
