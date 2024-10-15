@@ -1,0 +1,45 @@
+[versions]
+agp = "8.6.1"
+kotlin = "2.0.20"
+#kotlin = "1.8.10" # update to your Kotlin version
+androidx-appcompat = "1.7.0"
+constraintlayout = "2.1.4"
+legacy-support = "1.0.0"
+material = "1.12.0"
+junit = "4.13.2"
+androidx-junit = "1.2.1"
+espresso = "3.6.1"
+espresso-idling-resources = "3.6.1"
+kotlinx-coroutines = "1.8.1"
+volley = "1.2.1"
+fragment = "1.8.4"
+fragment-ktx = "1.8.4"
+cardview = "1.0.0"
+gson = "2.10.1"
+glide = "4.10.0"
+lifecycle-viewmodel-ktx = "2.8.6"
+
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+
+[libraries]
+kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk7", version.ref = "kotlin" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "androidx-appcompat" }
+constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+legacy-support = { group = "androidx.legacy", name = "legacy-support-v4", version.ref = "legacy-support" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-junit" }
+espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso" }
+#espresso-idling-resources = { group = "androidx.test.espresso", name = "espresso-idling-resources", version.ref = "espresso-idling-resources" }
+kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
+volley = { group = "com.android.volley", name = "volley", version.ref = "volley" }
+fragment = { group = "androidx.fragment", name = "fragment", version.ref = "fragment" }
+fragment-ktx = { group = "androidx.fragment", name = "fragment-ktx", version.ref = "fragment-ktx" }
+cardview = { group = "androidx.cardview", name = "cardview", version.ref = "cardview" }
+gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
+lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycle-viewmodel-ktx" }
