@@ -1,8 +1,8 @@
 to get it to work debug mode for now. comment out build.gradle buildtypes - release section
 
 to build
-up rev in build.gradle
-android studio - Build - Generate Signed Bundle/ APK - Android App Bundle - Next - Next - 'Release' - Build
+up rev in build.gradle (version code and version name)
+android studio - Build - Generate Signed Bundle/ APK - Android App Bundle - Next - Next -  select 'Release' - Build
 
 upload to internal app sharing, then download from link
 https://play.google.com/console/u/3/internal-app-sharing/?pli=1
