@@ -122,16 +122,16 @@ fun AppContent(
     ) {
         Scaffold(
             topBar = {
-                Image(
-                    painter = painterResource(id = R.drawable.logo_long_black) ,
+                Icon(
+                    painter = painterResource(id = R.drawable.logo_long_black),
                     contentDescription = "Boogaloo logo long black",
                     modifier = Modifier
                         .fillMaxWidth()
                         .wrapContentWidth(Alignment.Start)
                         .padding(16.dp)
                         .height(32.dp)
-                        , // Size can be adjusted as needed
-                    contentScale = ContentScale.Fit // Ensure proper scaling of the image
+                    , // Size can be adjusted as needed
+                    tint = MaterialTheme.colorScheme.onBackground
                 )
             },
             bottomBar = {

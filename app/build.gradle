@@ -54,6 +54,7 @@ dependencies {
     implementation(libs.runtimeLivedata)
     implementation(libs.coilCompose)
     implementation(libs.material3)
+    implementation libs.androidx.palette.ktx
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
