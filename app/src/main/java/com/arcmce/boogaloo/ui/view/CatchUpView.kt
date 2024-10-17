@@ -24,9 +24,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.arcmce.boogaloo.R
 import com.arcmce.boogaloo.ui.viewmodel.CatchUpCardItem
 import com.arcmce.boogaloo.ui.viewmodel.CatchUpViewModel
 import com.arcmce.boogaloo.ui.viewmodel.SharedViewModel
@@ -133,11 +137,18 @@ fun CardItemView(
         Column {
             // Load image using Coil
             AsyncImage(
-                model = item.thumbnail,
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(item.thumbnail)
+                    .crossfade(true) // Enable crossfade animation
+                    .crossfade(500) // Optional: Adjust the duration (in milliseconds)
+                    .build(),
+//                item.thumbnail,
                 contentDescription = item.name,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(150.dp)
+                    .height(150.dp),
+                placeholder = painterResource(R.drawable.ic_launcher_png),
+                error = painterResource(R.drawable.ic_launcher_png),
             )
             Text(
                 text = item.name,

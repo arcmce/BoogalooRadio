@@ -18,7 +18,7 @@ class PlaybackService : MediaSessionService() {
     private lateinit var player: ExoPlayer
     private var mediaSession: MediaSession? = null
 
-
+//    TODO if not immediately played it buffers - run seek to current on first play
     override fun onCreate() {
         super.onCreate()
         Log.d("PlaybackService", "PlaybackService created")

@@ -2,11 +2,13 @@ package com.arcmce.boogaloo.ui.view
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -107,6 +109,7 @@ fun AppContent(
     cloudcastViewModel: CloudcastViewModel,
     context: Context,
 ) {
+    val isDarkTheme = isSystemInDarkTheme()
 
     val liveTab = TabBarItem(title = "Live", selectedIcon = Icons.Filled.Home, unselectedIcon = Icons.Outlined.Home)
     val catchUpTab = TabBarItem(title = "CatchUp", selectedIcon = Icons.Filled.Notifications, unselectedIcon = Icons.Outlined.Notifications)
@@ -116,6 +119,11 @@ fun AppContent(
 
     val navController = rememberNavController()
 
+    LaunchedEffect(isDarkTheme) {
+        Log.d("MainActivity", "theme change detected")
+        sharedViewModel.setIsDarkTheme(isDarkTheme)
+    }
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -123,7 +131,7 @@ fun AppContent(
         Scaffold(
             topBar = {
                 Icon(
-                    painter = painterResource(id = R.drawable.logo_long_black),
+                    painter = painterResource(id = R.drawable.logo_long_white),
                     contentDescription = "Boogaloo logo long black",
                     modifier = Modifier
                         .fillMaxWidth()

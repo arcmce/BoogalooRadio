@@ -11,18 +11,18 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -32,7 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import coil.compose.AsyncImage
 import com.arcmce.boogaloo.R
 import com.arcmce.boogaloo.playback.PlaybackService
 import com.arcmce.boogaloo.ui.viewmodel.SharedViewModel
@@ -60,7 +61,11 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
 
     val title by sharedViewModel.liveTitle.observeAsState()
 
-    LaunchedEffect(Unit) {
+    val artworkColor by sharedViewModel.artworkColor.collectAsState()
+
+    val artworkUrl by sharedViewModel.artworkUrl.collectAsState()
+
+    DisposableEffect(Unit) {
         val sessionToken = SessionToken(context, ComponentName(context, PlaybackService::class.java))
         val controllerFuture = MediaController.Builder(context, sessionToken).buildAsync()
         controllerFuture.addListener(
@@ -70,8 +75,11 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
                     object : Player.Listener {
                         override fun onIsPlayingChanged(isPlaying: Boolean) {
                             Log.d("PlaybackControls", "onIsPlayingChanged ${player?.playbackState}")
-                            sharedViewModel.setPlayingState(isPlaying)
+                            if (player?.playbackState == Player.STATE_READY) {
+                                sharedViewModel.setPlayingState(isPlaying)
+                            }
                         }
+
 
 //                        override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
 //                            Log.d("PlaybackControls.Player.Listener", "onPlayWhenReadyChanged ${playWhenReady}")
@@ -87,6 +95,12 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
             },
             MoreExecutors.directExecutor()
         )
+
+        onDispose {
+            player?.release()
+            player = null
+
+        }
     }
 
     // Top-level layout as a Row
@@ -97,12 +111,34 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
             .padding(horizontal = 12.dp)
             .height(64.dp)
             .background(
-                color = MaterialTheme.colorScheme.primaryContainer, // Solid white background
+//                color = MaterialTheme.colorScheme.primaryContainer,
+                color = artworkColor,
                 shape = RoundedCornerShape(10.dp) // Adjust the corner radius as needed
             ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
+        artworkUrl?.let { url ->
+            if (url.isNotEmpty()) {
+                AsyncImage(
+                    model = url,
+                    contentDescription = "Current show artwork",
+                    modifier = Modifier
+                        .aspectRatio(1f)
+                        .clip(
+                            RoundedCornerShape(
+                                topStart = 10.dp,
+                                bottomStart = 10.dp,
+                                topEnd = 0.dp,
+                                bottomEnd = 0.dp
+                            )
+                        ),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Text(text = "No artwork available")
+            }
+        }
         Text(
             text = title ?: "Boogaloo Radio",
             style = MaterialTheme.typography.bodyLarge,
