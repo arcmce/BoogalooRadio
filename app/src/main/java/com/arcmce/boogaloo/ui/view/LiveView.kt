@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -42,40 +43,30 @@ fun LiveView(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
-            .padding(vertical = 128.dp)
-            .shadow(elevation = 2.dp)
-//            .padding(bottom = 64.dp)
+//            .padding(horizontal = 16.dp)
+//            .padding(bottom = 16.dp)
+//            .shadow(elevation = 2.dp)
         ,
-        verticalArrangement = Arrangement.Center,
+        verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Display image if artworkUrl is available
-        // TODO stretch to screen
         // TODO play button here?
-//        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.weight(1f))
 
         Box(
             modifier = Modifier
-                .fillMaxSize()
-//                .aspectRatio(1f) // Maintain a square aspect ratio
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .aspectRatio(1f)
+                .shadow(elevation = 4.dp)
         ) {
             // Frame image
             Image(
                 painter = painterResource(id = R.drawable.paper),
                 contentDescription = "Frame image",
-                modifier = Modifier
-                    .fillMaxSize()
-
-//                    .padding(top = 64.dp)
-//                    .padding(bottom = 0.dp)
-//                    .padding(16.dp)
-                    ,
+                modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
-
             )
-
-
 
             artworkUrl?.let { url ->
                 if (url.isNotEmpty()) {
@@ -90,12 +81,9 @@ fun LiveView(
 //                        model = url,
                         contentDescription = "Current show artwork",
                         modifier = Modifier
-                            .fillMaxWidth() // Fill the width of the screen
-                            .padding(horizontal = 24.dp)
-                            .padding(top = 24.dp)
-//                            .padding(bottom = 48.dp)
-                            .aspectRatio(1f),
-                        //                    modifier = Modifier.size(200.dp),
+                            .fillMaxSize()
+                            .padding(16.dp)
+                            .padding(bottom = 48.dp),
                         contentScale = ContentScale.Crop
                     )
                 } else {
@@ -105,5 +93,7 @@ fun LiveView(
             // TODO replace this text with placeholder image
             Text(text = title ?: "Boogaloo Radio", style = MaterialTheme.typography.bodyLarge)
         }
+
+        Spacer(modifier = Modifier.weight(1.5f))
     }
 }

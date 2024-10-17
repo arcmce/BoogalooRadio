@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -90,7 +92,9 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
             .fillMaxWidth()
             .padding(vertical = 4.dp)
             .padding(horizontal = 12.dp)
-            .height(64.dp)
+            .wrapContentHeight()
+            .heightIn(min = 24.dp, max = 48.dp)
+//            .height(64.dp)
             .background(
 //                color = MaterialTheme.colorScheme.primaryContainer,
                 color = Color(artworkColorSwatch?.rgb ?: Color.Gray.toArgb()),
@@ -126,7 +130,7 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
             color = Color(artworkColorSwatch?.bodyTextColor ?: Color.White.toArgb()),
             modifier = Modifier
                 .weight(1f) // Make the text take up available space
-                .padding(16.dp) // Add padding between text and button
+                .padding(horizontal = 16.dp) // Add padding between text and button
                 .basicMarquee(), // Add marquee scrolling
             maxLines = 1, // Limit to one line
             overflow = TextOverflow.Ellipsis // Fallback for no marquee support
