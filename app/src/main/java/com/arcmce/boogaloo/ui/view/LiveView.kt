@@ -33,14 +33,11 @@ fun LiveView(
     sharedViewModel: SharedViewModel
 ) {
 
-    // Observe the artwork URL from the ViewModel
     val artworkUrl by viewModel.artworkUrl.collectAsState()
     val title by viewModel.title.observeAsState()
-//    val artworkColor by viewModel.artworkColor.collectAsState()
 
     sharedViewModel.setArtworkUrl(artworkUrl)
     sharedViewModel.setLiveTitle(title)
-//    sharedViewModel.setArtworkColor(artworkColor)
 
     Column(
         modifier = Modifier

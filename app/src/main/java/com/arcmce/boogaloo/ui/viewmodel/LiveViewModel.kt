@@ -2,26 +2,23 @@ package com.arcmce.boogaloo.ui.viewmodel
 
 import android.app.Application
 import android.content.ComponentName
-import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import androidx.lifecycle.*
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
-import androidx.palette.graphics.Palette
-import coil.ImageLoader
-import coil.request.ImageRequest
-import coil.request.SuccessResult
 import com.arcmce.boogaloo.network.model.RadioInfo
 import com.arcmce.boogaloo.network.repository.Repository
 import com.arcmce.boogaloo.playback.PlaybackService
 import com.arcmce.boogaloo.util.AppConstants
 import com.google.common.util.concurrent.MoreExecutors
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -39,44 +36,12 @@ class LiveViewModel(private val repository: Repository, private val application:
 
     private val _artworkUrl = MutableStateFlow<String?>(null)
     val artworkUrl: StateFlow<String?> = _artworkUrl
-    private var previousArtworkUrl: String? = null
 
-    private val _artworkColor = MutableStateFlow(Color.Green)
-    val artworkColor: StateFlow<Color> = _artworkColor
-
-
-    fun loadImageAndExtractColors(imageUrl: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            // Load the image using Coil.
-            val loader = ImageLoader(application.applicationContext)
-            val request = ImageRequest.Builder(application.applicationContext)
-                .data(imageUrl)
-                .allowHardware(false) // Prevent hardware Bitmaps to enable Palette processing
-                .build()
-
-            val result = (loader.execute(request) as? SuccessResult)?.drawable
-            val bitmap = (result as? BitmapDrawable)?.bitmap
-
-            bitmap?.let {
-                // Generate a Palette from the Bitmap.
-                Palette.from(it).generate { palette ->
-                    // Extract the artwork color or use a default color.
-                    val color = palette?.lightVibrantSwatch?.rgb
-                        ?: palette?.lightMutedSwatch?.rgb
-                        ?: palette?.mutedSwatch?.rgb
-                        ?: palette?.vibrantSwatch?.rgb
-                        ?: palette?.darkVibrantSwatch?.rgb
-                        ?: palette?.darkMutedSwatch?.rgb
-                        ?: Color.Gray.toArgb()
-//                    val color = palette?.getMutedColor(Color.Red.toArgb()) ?: Color.Red.toArgb()
-                    _artworkColor.value = Color(color)
-                }
-            }
-        }
+    init {
+        setupPlayer()
     }
 
     fun setupPlayer() {
-        // Check if the player has already been initialized
         if (player == null) {
 
             val sessionToken = SessionToken(
@@ -87,7 +52,6 @@ class LiveViewModel(private val repository: Repository, private val application:
             controllerFuture.addListener(
                 {
                     player = controllerFuture.get()
-                    // Use the player to update media items or other operations
                 },
                 MoreExecutors.directExecutor()
             )
@@ -119,15 +83,8 @@ class LiveViewModel(private val repository: Repository, private val application:
                         _title.value = response.body()?.currentTrack?.title
 
                         val newArtworkUrl = response.body()?.currentTrack?.artworkUrlLarge
-                        // this is outside of the if, because otherwise _artworkUrl will never get set after a theme change. its hacky though
                         _artworkUrl.value = newArtworkUrl
 
-                        if (newArtworkUrl != previousArtworkUrl) {
-//                            _artworkUrl.value = newArtworkUrl
-                            previousArtworkUrl = newArtworkUrl
-
-                            newArtworkUrl?.let { loadImageAndExtractColors(it) }
-                        }
                         val metadataArtist = title.value ?: AppConstants.DEFAULT_ARTIST
                         val artworkUri = artworkUrl.value?.let { Uri.parse(it) } ?: Uri.EMPTY
 
