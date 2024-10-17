@@ -152,13 +152,13 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
                 Icon(
                     painter = painterResource(id = R.drawable.ic_media_pause),
                     contentDescription = "Pause button",
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                    tint = Color(artworkColorSwatch?.bodyTextColor ?: Color.White.toArgb()))
             } else {
                 Log.d("PlaybackControls", "is paused, icon changing to pause")
                 Icon(
                     painter = painterResource(id = R.drawable.ic_media_play),
                     contentDescription = "Play button",
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                    tint = Color(artworkColorSwatch?.bodyTextColor ?: Color.White.toArgb()))
             }
         }
     }
