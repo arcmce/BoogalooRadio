@@ -63,6 +63,10 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
         controllerFuture.addListener(
             {
                 player = controllerFuture.get()
+
+                val playing = player?.isPlaying == true
+                sharedViewModel.setPlayingState(playing)
+
                 player?.addListener(
                     object : Player.Listener {
                         override fun onIsPlayingChanged(isPlaying: Boolean) {
