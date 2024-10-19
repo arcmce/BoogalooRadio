@@ -147,8 +147,8 @@ fun CardItemView(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(150.dp),
-                placeholder = painterResource(R.drawable.ic_launcher_png),
-                error = painterResource(R.drawable.ic_launcher_png),
+                placeholder = painterResource(R.drawable.boogaloo_b),
+                error = painterResource(R.drawable.boogaloo_b),
             )
             Text(
                 text = item.name,

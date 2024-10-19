@@ -26,7 +26,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.arcmce.boogaloo.ui.viewmodel.CloudcastCardItem
 import com.arcmce.boogaloo.ui.viewmodel.CloudcastViewModel
@@ -35,8 +34,7 @@ import com.arcmce.boogaloo.ui.viewmodel.SharedViewModel
 @Composable
 fun CloudcastView(
     viewModel: CloudcastViewModel,
-    sharedViewModel: SharedViewModel,
-    navController: NavController
+    sharedViewModel: SharedViewModel
 ) {
 
     viewModel.setCloudcast(sharedViewModel.getCloudcast())
@@ -84,7 +82,6 @@ fun CloudcastCardItemView(item: CloudcastCardItem) {
     val context = LocalContext.current
 
     Card(
-        // TODO on click, load to mixcloud.
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight(),
@@ -115,13 +112,3 @@ fun CloudcastCardItemView(item: CloudcastCardItem) {
         }
     }
 }
-
-//fun Context.launchUriIntent(uri: String) {
-//    val parsedUri = Uri.parse(uri)
-//    val intent = Intent(Intent.ACTION_VIEW, parsedUri)
-//
-//    // Use a package manager to check if there is an app to handle the intent
-//    if (intent.resolveActivity(packageManager) != null) {
-//        startActivity(intent)
-//    }
-//}

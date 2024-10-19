@@ -3,13 +3,13 @@ package com.arcmce.boogaloo.ui.view
 import android.content.ComponentName
 import android.content.Context
 import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -125,9 +125,39 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
                     contentScale = ContentScale.Crop
                 )
             } else {
-                Text(text = "No artwork available")
+                Image(
+                    painter = painterResource(id = R.drawable.boogaloo_b),
+                    contentDescription = "Current show artwork placeholder",
+                    modifier =  Modifier
+                        .aspectRatio(1f)
+                        .clip(
+                            RoundedCornerShape(
+                                topStart = 10.dp,
+                                bottomStart = 10.dp,
+                                topEnd = 0.dp,
+                                bottomEnd = 0.dp
+                            )
+                        ),
+                    contentScale = ContentScale.Crop
+                )
             }
-        }
+        } ?:
+        Image(
+            painter = painterResource(id = R.drawable.boogaloo_b),
+            contentDescription = "Current show artwork placeholder",
+            modifier =  Modifier
+                .aspectRatio(1f)
+                .clip(
+                    RoundedCornerShape(
+                        topStart = 10.dp,
+                        bottomStart = 10.dp,
+                        topEnd = 0.dp,
+                        bottomEnd = 0.dp
+                    )
+                ),
+            contentScale = ContentScale.Crop
+        )
+
         Text(
             text = title ?: "Boogaloo Radio",
             style = MaterialTheme.typography.bodyLarge,
@@ -140,7 +170,6 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
             overflow = TextOverflow.Ellipsis // Fallback for no marquee support
         )
 
-        // TODO can this be improved?
         IconButton(onClick = {
             if (isPlaying) {
                 player?.pause()
@@ -151,19 +180,14 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
                 Log.d("PlaybackControls", "Starting playback")
             }
         }) {
-            if (isPlaying) {
-                Log.d("PlaybackControls", "is playing, icon changing to play")
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_media_pause),
-                    contentDescription = "Pause button",
-                    tint = Color(artworkColorSwatch?.bodyTextColor ?: Color.White.toArgb()))
-            } else {
-                Log.d("PlaybackControls", "is paused, icon changing to pause")
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_media_play),
-                    contentDescription = "Play button",
-                    tint = Color(artworkColorSwatch?.bodyTextColor ?: Color.White.toArgb()))
-            }
+            val iconRes = if (isPlaying) R.drawable.ic_media_pause else R.drawable.ic_media_play
+            val contentDescription = if (isPlaying) "Pause button" else "Play button"
+
+            Icon(
+                painter = painterResource(id = iconRes),
+                contentDescription = contentDescription,
+                tint = Color(artworkColorSwatch?.bodyTextColor ?: Color.White.toArgb())
+            )
         }
     }
 }
