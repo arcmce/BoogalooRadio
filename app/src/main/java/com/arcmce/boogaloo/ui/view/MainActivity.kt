@@ -174,7 +174,7 @@ fun AppContent(
                     composable(liveTab.title) { LiveView(liveViewModel, sharedViewModel )}
                     composable(catchUpTab.title) { CatchUpView(catchUpViewModel, sharedViewModel, navController) }
 
-                    composable("pastShow/{slug}") { CloudcastView(cloudcastViewModel, sharedViewModel, navController) }
+                    composable("pastShow/{slug}") { CloudcastView(cloudcastViewModel, sharedViewModel) }
                 }
 
                 // TODO become visible when service state is playing
