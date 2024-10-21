@@ -7,6 +7,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,8 +34,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.ColorUtils
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -42,6 +45,7 @@ import coil.compose.AsyncImage
 import com.arcmce.boogaloo.R
 import com.arcmce.boogaloo.playback.PlaybackService
 import com.arcmce.boogaloo.ui.viewmodel.SharedViewModel
+import com.arcmce.boogaloo.util.AppConstants
 import com.google.common.util.concurrent.MoreExecutors
 
 @Composable
@@ -51,11 +55,22 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
 
     val isPlaying by sharedViewModel.isPlaying.collectAsState()
 
-    val title by sharedViewModel.liveTitle.observeAsState()
+    val title by sharedViewModel.liveTitle.collectAsState()
+
+    val artist by sharedViewModel.liveArtist.collectAsState()
 
     val artworkColorSwatch by sharedViewModel.artworkColorSwatch.collectAsState()
 
-    val artworkUrl by sharedViewModel.artworkUrl.collectAsState()
+    val artworkUrl by sharedViewModel.liveArtworkUrl.collectAsState()
+
+    val adjustedColor = artworkColorSwatch?.hsl?.let { hsl ->
+        hsl[1] = (hsl[1] * 0.8f).coerceIn(0f, 1f)
+
+        hsl[2] = (hsl[2] * 0.8f).coerceIn(0f, 1f)
+
+        // Convert back to Color
+        Color(ColorUtils.HSLToColor(hsl))
+    } ?: Color.Gray // Fallback to gray if swatch is null
 
     DisposableEffect(Unit) {
         val sessionToken = SessionToken(context, ComponentName(context, PlaybackService::class.java))
@@ -90,7 +105,6 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
         }
     }
 
-    // Top-level layout as a Row
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -101,7 +115,8 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
 //            .height(64.dp)
             .background(
 //                color = MaterialTheme.colorScheme.primaryContainer,
-                color = Color(artworkColorSwatch?.rgb ?: Color.Gray.toArgb()),
+//                color = Color(artworkColorSwatch?.rgb ?: Color.Gray.toArgb()),
+                color = adjustedColor,
                 shape = RoundedCornerShape(10.dp) // Adjust the corner radius as needed
             ),
         verticalAlignment = Alignment.CenterVertically,
@@ -158,17 +173,29 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
             contentScale = ContentScale.Crop
         )
 
-        Text(
-            text = title ?: "Boogaloo Radio",
-            style = MaterialTheme.typography.bodyLarge,
-            color = Color(artworkColorSwatch?.bodyTextColor ?: Color.White.toArgb()),
+        Column(
             modifier = Modifier
-                .weight(1f) // Make the text take up available space
+                .weight(1f) // Take up available space within the Row
                 .padding(horizontal = 16.dp) // Add padding between text and button
-                .basicMarquee(), // Add marquee scrolling
-            maxLines = 1, // Limit to one line
-            overflow = TextOverflow.Ellipsis // Fallback for no marquee support
-        )
+        ) {
+            Text(
+                text = title ?: AppConstants.RADIO_TITLE,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(artworkColorSwatch?.bodyTextColor ?: Color.White.toArgb()),
+                modifier = Modifier
+                    .basicMarquee(),
+                fontWeight = FontWeight.Bold,
+                maxLines = 1, // Limit to one line
+                overflow = TextOverflow.Ellipsis // Fallback for no marquee support
+            )
+            Text(
+                text = artist ?: AppConstants.DEFAULT_ARTIST,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(artworkColorSwatch?.bodyTextColor ?: Color.White.toArgb()),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
 
         IconButton(onClick = {
             if (isPlaying) {

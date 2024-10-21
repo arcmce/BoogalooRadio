@@ -1,8 +1,10 @@
 package com.arcmce.boogaloo.ui.view
 
+import ScheduleView
 import android.content.Context
 import android.os.Bundle
 import android.util.Log
+import android.view.Window
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -15,10 +17,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,12 +37,15 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -51,8 +60,8 @@ import com.arcmce.boogaloo.ui.theme.BoogalooJetpackTheme
 import com.arcmce.boogaloo.ui.viewmodel.CatchUpViewModel
 import com.arcmce.boogaloo.ui.viewmodel.CatchUpViewModelFactory
 import com.arcmce.boogaloo.ui.viewmodel.CloudcastViewModel
-import com.arcmce.boogaloo.ui.viewmodel.LiveViewModel
-import com.arcmce.boogaloo.ui.viewmodel.LiveViewModelFactory
+import com.arcmce.boogaloo.ui.viewmodel.ColorViewModel
+import com.arcmce.boogaloo.ui.viewmodel.ColorViewModelFactory
 import com.arcmce.boogaloo.ui.viewmodel.SharedViewModel
 import com.arcmce.boogaloo.ui.viewmodel.SharedViewModelFactory
 import kotlinx.coroutines.CoroutineScope
@@ -75,39 +84,45 @@ class MainActivity : ComponentActivity() {
 
         val repository = Repository()
 
-        val sharedViewModel: SharedViewModel by viewModels { SharedViewModelFactory(application) }
-        val liveViewModel: LiveViewModel by viewModels { LiveViewModelFactory(repository, application) }
+        val sharedViewModel: SharedViewModel by viewModels { SharedViewModelFactory(repository, application) }
+//        val liveViewModel: LiveViewModel by viewModels { LiveViewModelFactory(repository, application) }
         val catchUpViewModel: CatchUpViewModel by viewModels { CatchUpViewModelFactory(repository) }
         val cloudcastViewModel: CloudcastViewModel by viewModels()
+        val colorViewModel: ColorViewModel by viewModels { ColorViewModelFactory(repository, application) }
 
         setContent {
             BoogalooJetpackTheme {
                 AppContent(
-                    liveViewModel = liveViewModel,
+//                    liveViewModel = liveViewModel,
                     catchUpViewModel = catchUpViewModel,
-                    sharedViewModel = sharedViewModel,
                     cloudcastViewModel = cloudcastViewModel,
-                    context = this)
+                    colorViewModel = colorViewModel,
+                    sharedViewModel = sharedViewModel,
+                    context = this,
+                    window = window)
             }
         }
 
-        startBackgroundCoroutine(liveViewModel)
+        startBackgroundCoroutine(sharedViewModel)
     }
 
-    private fun startBackgroundCoroutine(liveViewModel: LiveViewModel) {
-
-        val context = this
+    private fun startBackgroundCoroutine(sharedViewModel: SharedViewModel) {
 
         val scope = CoroutineScope(Dispatchers.Default)
 
-        // Start a coroutine that runs every 10 seconds
         scope.launch {
             while (true) {
-                // Update data in the ViewModel or any other relevant logic
-                liveViewModel.fetchRadioInfo()
+                sharedViewModel.fetchRadioSchedule()
 
-                // Delay for 60 seconds
-                delay(10_000)
+                delay(5 * 60 * 1000)
+            }
+        }
+
+        scope.launch {
+            while (true) {
+                sharedViewModel.getOnAirItem()
+
+                delay(10 * 1000)
             }
         }
     }
@@ -117,21 +132,30 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppContent(
-    liveViewModel: LiveViewModel,
+//    liveViewModel: LiveViewModel,
     catchUpViewModel: CatchUpViewModel,
-    sharedViewModel: SharedViewModel,
     cloudcastViewModel: CloudcastViewModel,
+    colorViewModel: ColorViewModel,
+    sharedViewModel: SharedViewModel,
     context: Context,
+    window: Window,
 ) {
     val isDarkTheme = isSystemInDarkTheme()
 
     val liveTab = TabBarItem(title = "Live", selectedIcon = Icons.Filled.Home, unselectedIcon = Icons.Outlined.Home)
     val catchUpTab = TabBarItem(title = "CatchUp", selectedIcon = Icons.Filled.Notifications, unselectedIcon = Icons.Outlined.Notifications)
+    val scheduleTab = TabBarItem(title = "Schedule", selectedIcon = Icons.Filled.Warning, unselectedIcon = Icons.Outlined.Warning)
+    val colorTab = TabBarItem(title = "Color", selectedIcon = Icons.Filled.Add, unselectedIcon = Icons.Outlined.Add)
+
 
     // creating a list of all the tabs
-    val tabBarItems = listOf(liveTab, catchUpTab)
+    val tabBarItems = listOf(liveTab, scheduleTab, catchUpTab, colorTab)
 
     val navController = rememberNavController()
+
+    val artworkColorSwatch by sharedViewModel.artworkColorSwatch.collectAsState()
+
+    window.statusBarColor = artworkColorSwatch?.rgb ?: Color.Gray.toArgb()
 
     LaunchedEffect(isDarkTheme) {
         Log.d("MainActivity", "theme change detected")
@@ -171,8 +195,10 @@ fun AppContent(
                     startDestination = liveTab.title,
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    composable(liveTab.title) { LiveView(liveViewModel, sharedViewModel )}
+                    composable(liveTab.title) { LiveView(sharedViewModel )}
+                    composable(scheduleTab.title) { ScheduleView(sharedViewModel) }
                     composable(catchUpTab.title) { CatchUpView(catchUpViewModel, sharedViewModel, navController) }
+                    composable(colorTab.title) { ColorView(colorViewModel, sharedViewModel) }
 
                     composable("pastShow/{slug}") { CloudcastView(cloudcastViewModel, sharedViewModel) }
                 }

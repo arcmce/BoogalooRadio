@@ -6,6 +6,7 @@ import com.arcmce.boogaloo.network.api.RetrofitInstance
 import com.arcmce.boogaloo.network.model.MixCloudCloudcast
 import com.arcmce.boogaloo.network.model.MixCloudPlaylist
 import com.arcmce.boogaloo.network.model.RadioInfo
+import com.arcmce.boogaloo.network.model.RadioSchedule
 import retrofit2.Call
 
 class Repository() {
@@ -14,6 +15,10 @@ class Repository() {
 
     fun getRadioInfo(): Call<RadioInfo> {
         return radioApi.getRadioInfo()
+    }
+
+    fun getRadioSchedule(): Call<RadioSchedule> {
+        return radioApi.getRadioSchedule()
     }
 
     fun getPlaylist(): Call<MixCloudPlaylist> {

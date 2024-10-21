@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -23,21 +22,19 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.arcmce.boogaloo.R
-import com.arcmce.boogaloo.ui.viewmodel.LiveViewModel
 import com.arcmce.boogaloo.ui.viewmodel.SharedViewModel
 
 @Composable
 fun LiveView(
-    viewModel: LiveViewModel,
     sharedViewModel: SharedViewModel
 ) {
 
-    val artworkUrl by viewModel.artworkUrl.collectAsState()
-    val title by viewModel.title.observeAsState()
+    val artworkUrl by sharedViewModel.liveArtworkUrl.collectAsState()
+    val title by sharedViewModel.liveTitle.collectAsState()
 
     val isDarkTheme by sharedViewModel.isDarkTheme.collectAsState()
 
-    sharedViewModel.setArtworkUrl(artworkUrl)
+    sharedViewModel.setLiveArtworkUrl(artworkUrl)
     sharedViewModel.setLiveTitle(title)
 
     val paperRes = if (isDarkTheme) R.drawable.paper_dark else R.drawable.paper_light

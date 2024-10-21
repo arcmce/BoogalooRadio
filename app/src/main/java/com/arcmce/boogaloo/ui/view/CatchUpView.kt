@@ -132,7 +132,7 @@ fun CardItemView(
             navController.navigate("pastShow/${item.slug}") {
                 // Pass cloudcastData as a parameter or using a shared ViewModel
             }
-        }
+        },
     ) {
         Column {
             // Load image using Coil
