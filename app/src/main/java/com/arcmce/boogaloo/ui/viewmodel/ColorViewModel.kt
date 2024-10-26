@@ -46,6 +46,45 @@ class ColorViewModel(private val repository: Repository, private val application
 
     fun setLiveSchedule(liveSchedule: List<ScheduleItem>) {
         _liveSchedule.value = liveSchedule
+        liveSchedule.forEach {
+            extractPaletteForUrl(it.playlist.artwork)
+        }
+    }
+
+    private val _paletteMap = MutableStateFlow<Map<String, Palette>>(emptyMap())
+    val paletteMap: StateFlow<Map<String, Palette>> = _paletteMap
+
+    fun extractPaletteForUrl(url: String) {
+        if (_paletteMap.value.containsKey(url)) {
+            return
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val loader = ImageLoader(application.applicationContext)
+            val request = ImageRequest.Builder(application.applicationContext)
+                .data(url)
+                .allowHardware(false)
+                .build()
+
+            val result = (loader.execute(request) as? SuccessResult)?.drawable
+            val bitmap = (result as? BitmapDrawable)?.bitmap
+
+            bitmap?.let {
+                // Generate a Palette from the Bitmap.
+                Palette.from(it).generate { palette ->
+                    palette?.let {
+                        val updatedMap = _paletteMap.value.toMutableMap()
+                        updatedMap[url] = palette
+                        _paletteMap.value = updatedMap
+                    }
+                }
+            }
+        }
+    }
+
+    // Function to get a Palette for a specific URL (or null if not found)
+    fun getPaletteForUrl(url: String): Palette? {
+        return _paletteMap.value[url]
     }
 
     private fun getArtworkSwatchFromPalette() {
