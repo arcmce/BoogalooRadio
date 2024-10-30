@@ -2,15 +2,15 @@ package com.arcmce.boogaloo.network.model
 
 import androidx.compose.ui.graphics.Color
 import com.google.gson.annotations.SerializedName
-import java.util.Date
+import java.time.ZonedDateTime
 
 data class RadioSchedule(
     @SerializedName("data") val data: List<ScheduleItem>
 )
 
 data class ScheduleItem(
-    val start: Date,
-    val end: Date,
+    val start: ZonedDateTime,
+    val end: ZonedDateTime,
     val playlist: SchedulePlaylist
 )
 

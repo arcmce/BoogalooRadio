@@ -1,6 +1,5 @@
 package com.arcmce.boogaloo.ui.view
 
-import ScheduleView
 import android.content.Context
 import android.os.Bundle
 import android.util.Log
@@ -62,6 +61,7 @@ import com.arcmce.boogaloo.ui.viewmodel.CatchUpViewModelFactory
 import com.arcmce.boogaloo.ui.viewmodel.CloudcastViewModel
 import com.arcmce.boogaloo.ui.viewmodel.ColorViewModel
 import com.arcmce.boogaloo.ui.viewmodel.ColorViewModelFactory
+import com.arcmce.boogaloo.ui.viewmodel.ScheduleViewModel
 import com.arcmce.boogaloo.ui.viewmodel.SharedViewModel
 import com.arcmce.boogaloo.ui.viewmodel.SharedViewModelFactory
 import kotlinx.coroutines.CoroutineScope
@@ -89,11 +89,13 @@ class MainActivity : ComponentActivity() {
         val catchUpViewModel: CatchUpViewModel by viewModels { CatchUpViewModelFactory(repository) }
         val cloudcastViewModel: CloudcastViewModel by viewModels()
         val colorViewModel: ColorViewModel by viewModels { ColorViewModelFactory(repository, application) }
+        val scheduleViewModel: ScheduleViewModel by viewModels()
 
         setContent {
             BoogalooJetpackTheme {
                 AppContent(
 //                    liveViewModel = liveViewModel,
+                    scheduleViewModel = scheduleViewModel,
                     catchUpViewModel = catchUpViewModel,
                     cloudcastViewModel = cloudcastViewModel,
                     colorViewModel = colorViewModel,
@@ -133,6 +135,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppContent(
 //    liveViewModel: LiveViewModel,
+    scheduleViewModel: ScheduleViewModel,
     catchUpViewModel: CatchUpViewModel,
     cloudcastViewModel: CloudcastViewModel,
     colorViewModel: ColorViewModel,
@@ -196,7 +199,7 @@ fun AppContent(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     composable(liveTab.title) { LiveView(sharedViewModel )}
-                    composable(scheduleTab.title) { ScheduleView(sharedViewModel) }
+                    composable(scheduleTab.title) { ScheduleView(scheduleViewModel, sharedViewModel) }
                     composable(catchUpTab.title) { CatchUpView(catchUpViewModel, sharedViewModel, navController) }
                     composable(colorTab.title) { ColorView(colorViewModel, sharedViewModel) }
 

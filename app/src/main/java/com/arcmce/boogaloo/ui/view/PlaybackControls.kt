@@ -115,8 +115,8 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
 //            .height(64.dp)
             .background(
 //                color = MaterialTheme.colorScheme.primaryContainer,
-//                color = Color(artworkColorSwatch?.rgb ?: Color.Gray.toArgb()),
-                color = adjustedColor,
+                color = Color(artworkColorSwatch?.rgb ?: Color.Gray.toArgb()),
+//                color = adjustedColor,
                 shape = RoundedCornerShape(10.dp) // Adjust the corner radius as needed
             ),
         verticalAlignment = Alignment.CenterVertically,

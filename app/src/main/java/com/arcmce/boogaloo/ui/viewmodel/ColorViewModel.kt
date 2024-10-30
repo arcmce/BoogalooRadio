@@ -1,51 +1,51 @@
 package com.arcmce.boogaloo.ui.viewmodel
 
 import android.app.Application
-import android.content.ComponentName
 import android.graphics.drawable.BitmapDrawable
-import android.net.Uri
-import android.os.Build
-import androidx.annotation.RequiresApi
+import android.util.Log
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaMetadata
-import androidx.media3.common.Player
-import androidx.media3.session.MediaController
-import androidx.media3.session.SessionToken
 import androidx.palette.graphics.Palette
-import androidx.palette.graphics.Palette.Swatch
 import coil.ImageLoader
 import coil.request.ImageRequest
 import coil.request.SuccessResult
-import com.arcmce.boogaloo.network.model.MixCloudCloudcast
-import com.arcmce.boogaloo.network.model.RadioSchedule
 import com.arcmce.boogaloo.network.model.ScheduleItem
 import com.arcmce.boogaloo.network.repository.Repository
-import com.arcmce.boogaloo.playback.PlaybackService
-import com.arcmce.boogaloo.util.AppConstants
-import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import java.time.LocalDateTime
-import java.time.ZoneId
+
+
+data class ColorCardItem(
+    val color: Color,
+    var thumbnail: String
+)
 
 class ColorViewModel(private val repository: Repository, private val application: Application) : AndroidViewModel(application) {
+
+    private val _colorCardDataset = MutableStateFlow<List<ColorCardItem>>(emptyList())
+    val colorCardDataset: StateFlow<List<ColorCardItem>> get() = _colorCardDataset
 
     private val _liveSchedule = MutableStateFlow<List<ScheduleItem>>(emptyList())
     val liveSchedule: StateFlow<List<ScheduleItem>> = _liveSchedule
 
     fun setLiveSchedule(liveSchedule: List<ScheduleItem>) {
         _liveSchedule.value = liveSchedule
+        val dataset = liveSchedule.map { it ->
+            ColorCardItem(
+                color = Color.Red,
+                thumbnail = it.playlist.artwork
+            )
+        }
+
+        _colorCardDataset.value = dataset
+
         liveSchedule.forEach {
             extractPaletteForUrl(it.playlist.artwork)
         }
@@ -73,9 +73,14 @@ class ColorViewModel(private val repository: Repository, private val application
                 // Generate a Palette from the Bitmap.
                 Palette.from(it).generate { palette ->
                     palette?.let {
-                        val updatedMap = _paletteMap.value.toMutableMap()
-                        updatedMap[url] = palette
-                        _paletteMap.value = updatedMap
+                        _colorCardDataset.update { currentList ->
+                            currentList.map { item ->
+                                if (item.thumbnail == url) {
+                                    item.copy(color = Color(palette.getVibrantColor(palette.getMutedColor(Color.Red.toArgb()))))
+//                                    item.copy(color = Color(palette.getVibrantColor(Color.Red.toArgb())))
+                                } else item
+                            }
+                        }
                     }
                 }
             }

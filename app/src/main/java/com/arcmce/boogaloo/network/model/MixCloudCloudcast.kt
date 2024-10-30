@@ -1,6 +1,7 @@
 package com.arcmce.boogaloo.network.model
 
-import java.util.Date
+import java.time.ZonedDateTime
+
 
 data class MixCloudCloudcast(
     val data: ArrayList<CloudcastData>
@@ -9,7 +10,7 @@ data class MixCloudCloudcast(
 data class CloudcastData(
     val user: User,
     val key: String,
-    val createdTime: Date,
+    val createdTime: ZonedDateTime,
     val name: String,
     val url: String,
     val pictures: Pictures
