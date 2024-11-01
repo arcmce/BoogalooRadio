@@ -56,14 +56,13 @@ fun CloudcastVerticalGrid(
 //    items: List<CatchUpCardItem>
 ) {
 
-
     val gridState = rememberLazyGridState()
 
     val cardItems by viewModel.cloudcastCardDataset.collectAsState(initial = emptyList())
 
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 128.dp),
-        contentPadding = PaddingValues(16.dp),
+        contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 64.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         state = gridState,

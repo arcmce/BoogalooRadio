@@ -1,6 +1,7 @@
 package com.arcmce.boogaloo.util
 
 import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 
@@ -22,4 +23,9 @@ private fun getDaySuffix(day: Int): String {
         day % 10 == 3 -> "rd"
         else -> "th"
     }
+}
+
+fun ZonedDateTime.toTimeFormat(): String {
+    val formatter = DateTimeFormatter.ofPattern("hh:mm a")
+    return this.format(formatter)
 }

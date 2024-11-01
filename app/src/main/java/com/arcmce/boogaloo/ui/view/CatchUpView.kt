@@ -93,7 +93,7 @@ fun CatchUpVerticalGrid(
 
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 128.dp),
-        contentPadding = PaddingValues(16.dp),
+        contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 64.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         state = gridState,
