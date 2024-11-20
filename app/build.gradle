@@ -19,7 +19,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField "boolean", "SHOW_COLOR_TAB", "true"
+        }
         release {
+            buildConfigField "boolean", "SHOW_COLOR_TAB", "false"
             minifyEnabled false
             proguardFiles(
                     getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -28,6 +32,7 @@ android {
         }
     }
     buildFeatures {
+        buildConfig = true
         compose = true
     }
     compileOptions {

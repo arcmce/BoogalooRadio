@@ -26,6 +26,6 @@ private fun getDaySuffix(day: Int): String {
 }
 
 fun ZonedDateTime.toTimeFormat(): String {
-    val formatter = DateTimeFormatter.ofPattern("hh:mm a")
+    val formatter = DateTimeFormatter.ofPattern("h:mm a")
     return this.format(formatter)
 }

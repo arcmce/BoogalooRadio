@@ -18,12 +18,8 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -47,12 +43,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.arcmce.boogaloo.BuildConfig
 import com.arcmce.boogaloo.R
 import com.arcmce.boogaloo.network.repository.Repository
 import com.arcmce.boogaloo.ui.theme.BoogalooJetpackTheme
@@ -145,14 +143,22 @@ fun AppContent(
 ) {
     val isDarkTheme = isSystemInDarkTheme()
 
+    val scheduleVectorOutline = ImageVector.vectorResource(id = R.drawable.outline_calendar_month_24)
+    val scheduleVectorFilled = ImageVector.vectorResource(id = R.drawable.baseline_calendar_month_24)
+    val catchupVector = ImageVector.vectorResource(id = R.drawable.baseline_schedule_24)
+
     val liveTab = TabBarItem(title = "Live", selectedIcon = Icons.Filled.Home, unselectedIcon = Icons.Outlined.Home)
-    val catchUpTab = TabBarItem(title = "CatchUp", selectedIcon = Icons.Filled.Notifications, unselectedIcon = Icons.Outlined.Notifications)
-    val scheduleTab = TabBarItem(title = "Schedule", selectedIcon = Icons.Filled.Warning, unselectedIcon = Icons.Outlined.Warning)
+    val scheduleTab = TabBarItem(title = "Schedule", selectedIcon = scheduleVectorFilled, unselectedIcon = scheduleVectorOutline)
+    val catchUpTab = TabBarItem(title = "CatchUp", selectedIcon = catchupVector, unselectedIcon = catchupVector)
     val colorTab = TabBarItem(title = "Color", selectedIcon = Icons.Filled.Add, unselectedIcon = Icons.Outlined.Add)
 
 
     // creating a list of all the tabs
-    val tabBarItems = listOf(liveTab, scheduleTab, catchUpTab, colorTab)
+    val tabBarItems = mutableListOf(liveTab, scheduleTab, catchUpTab).apply {
+        if (BuildConfig.SHOW_COLOR_TAB) {
+            add(colorTab)
+        }
+    }
 
     val navController = rememberNavController()
 

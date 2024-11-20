@@ -88,6 +88,8 @@ class CatchUpViewModel(private val repository: Repository) : ViewModel() {
                 override fun onResponse(call: Call<MixCloudCloudcast>, response: Response<MixCloudCloudcast>) {
                     if (response.isSuccessful) {
                         val cloudcast = response.body()
+                        if (cloudcast?.data.isNullOrEmpty()) return
+
                         _cloudcastData.update { it + (key to cloudcast) }
 
                         fetchedKeys.add(key)
