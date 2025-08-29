@@ -45,7 +45,7 @@ class CatchUpViewModel(private val repository: Repository) : ViewModel() {
                         val dataset = response.body()?.data?.map { playlist ->
                             CatchUpCardItem(
                                 name = playlist.name,
-                                thumbnail = _cloudcastData.value[playlist.slug]?.data?.first()?.pictures?.large
+                                thumbnail = _cloudcastData.value[playlist.slug]?.data?.firstOrNull()?.pictures?.large
                                     ?: playlist.owner.pictures.large,
                                 slug = playlist.slug
                             )
@@ -95,7 +95,7 @@ class CatchUpViewModel(private val repository: Repository) : ViewModel() {
                         _catchupCardDataset.update { currentList ->
                             currentList.map { item ->
                                 if (item.slug == key) {
-                                    item.copy(thumbnail = cloudcast?.data?.first()?.pictures?.large ?: item.thumbnail)
+                                    item.copy(thumbnail = cloudcast?.data?.firstOrNull()?.pictures?.large ?: item.thumbnail)
                                 } else item
                             }
                         }
