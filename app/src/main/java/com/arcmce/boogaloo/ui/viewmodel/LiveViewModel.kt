@@ -15,7 +15,6 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
-import com.arcmce.boogaloo.network.model.RadioInfo
 import com.arcmce.boogaloo.network.repository.Repository
 import com.arcmce.boogaloo.playback.PlaybackService
 import com.arcmce.boogaloo.util.AppConstants
@@ -24,9 +23,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 
 
 class LiveViewModel(private val repository: Repository, private val application: Application) : AndroidViewModel(application) {
@@ -89,35 +85,28 @@ class LiveViewModel(private val repository: Repository, private val application:
         player?.replaceMediaItem(0, mediaItem)
     }
 
-    fun fetchRadioInfo() {
-        viewModelScope.launch {
-            val call = repository.getRadioInfo()
-            call.enqueue(object : Callback<RadioInfo> {
-                override fun onResponse(call: Call<RadioInfo>, response: Response<RadioInfo>) {
-                    if (response.isSuccessful) {
-                        _error.value = null
-                        _title.value = response.body()?.currentTrack?.title
+    private suspend fun fetchRadioInfo() {
+        try {
+            val response = repository.getRadioInfo()
+            if (response.isSuccessful) {
+                _error.value = null
+                _title.value = response.body()?.currentTrack?.title
 
-                        val newArtworkUrl = response.body()?.currentTrack?.artworkUrlLarge
-                        _artworkUrl.value = newArtworkUrl
+                val newArtworkUrl = response.body()?.currentTrack?.artworkUrlLarge
+                _artworkUrl.value = newArtworkUrl
 
-                        val metadataArtist = title.value ?: AppConstants.DEFAULT_ARTIST
-                        val artworkUri = artworkUrl.value?.let { Uri.parse(it) } ?: Uri.EMPTY
+                val metadataArtist = _title.value ?: AppConstants.DEFAULT_ARTIST
+                val artworkUri = _artworkUrl.value?.let { Uri.parse(it) } ?: Uri.EMPTY
 
-                        updateMetadata(metadataArtist, artworkUri)
-
-                    } else {
-                        _artworkUrl.value = null
-                        _error.value = "Failed to load track info (${response.code()})"
-                    }
-                }
-
-                override fun onFailure(call: Call<RadioInfo>, t: Throwable) {
-                    _artworkUrl.value = null
-                    _error.value = "Network error: ${t.message}"
-                    Log.e("LiveViewModel", "fetchRadioInfo failed", t)
-                }
-            })
+                updateMetadata(metadataArtist, artworkUri)
+            } else {
+                _artworkUrl.value = null
+                _error.value = "Failed to load track info (${response.code()})"
+            }
+        } catch (e: Exception) {
+            _artworkUrl.value = null
+            _error.value = "Network error: ${e.message}"
+            Log.e("LiveViewModel", "fetchRadioInfo failed", e)
         }
     }
 

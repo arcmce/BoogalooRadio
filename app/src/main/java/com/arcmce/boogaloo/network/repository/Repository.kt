@@ -6,21 +6,15 @@ import com.arcmce.boogaloo.network.api.RetrofitInstance
 import com.arcmce.boogaloo.network.model.MixCloudCloudcast
 import com.arcmce.boogaloo.network.model.MixCloudPlaylist
 import com.arcmce.boogaloo.network.model.RadioInfo
-import retrofit2.Call
+import retrofit2.Response
 
 class Repository() {
     private val radioApi: RadioApi = RetrofitInstance.createService("https://public.radio.co/", RadioApi::class.java)
     private val mixCloudApi: MixCloudApi = RetrofitInstance.createService("https://api.mixcloud.com/", MixCloudApi::class.java)
 
-    fun getRadioInfo(): Call<RadioInfo> {
-        return radioApi.getRadioInfo()
-    }
+    suspend fun getRadioInfo(): Response<RadioInfo> = radioApi.getRadioInfo()
 
-    fun getPlaylist(): Call<MixCloudPlaylist> {
-        return mixCloudApi.getPlaylist()
-    }
+    suspend fun getPlaylist(): Response<MixCloudPlaylist> = mixCloudApi.getPlaylist()
 
-    fun getCloudcast(key: String): Call<MixCloudCloudcast> {
-        return mixCloudApi.getCloudcast(key)
-    }
+    suspend fun getCloudcast(key: String): Response<MixCloudCloudcast> = mixCloudApi.getCloudcast(key)
 }

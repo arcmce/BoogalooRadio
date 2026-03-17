@@ -9,16 +9,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 
 
 data class CatchUpCardItem(
     val name: String,
     var thumbnail: String,
     val slug: String,
-//    val url: ArrayList<String>
 )
 
 class CatchUpViewModel(private val repository: Repository) : ViewModel() {
@@ -33,89 +29,67 @@ class CatchUpViewModel(private val repository: Repository) : ViewModel() {
 
     private val lastRequestTimes = mutableMapOf<String, Long>()
 
-    private val timeoutMillis = 5000L // 5 seconds timeout
+    private val timeoutMillis = 5000L
 
     fun fetchPlaylist() {
         viewModelScope.launch {
-            val call = repository.getPlaylist()
-            call.enqueue(object : Callback<MixCloudPlaylist> {
-                override fun onResponse(call: Call<MixCloudPlaylist>, response: Response<MixCloudPlaylist>) {
+            try {
+                val response = repository.getPlaylist()
+                if (response.isSuccessful) {
+                    val dataset = response.body()?.data?.map { playlist ->
+                        CatchUpCardItem(
+                            name = playlist.name,
+                            thumbnail = _cloudcastData.value[playlist.slug]?.data?.firstOrNull()?.pictures?.large
+                                ?: playlist.owner.pictures.large,
+                            slug = playlist.slug
+                        )
+                    } ?: emptyList()
 
-                    if (response.isSuccessful) {
-                        val dataset = response.body()?.data?.map { playlist ->
-                            CatchUpCardItem(
-                                name = playlist.name,
-                                thumbnail = _cloudcastData.value[playlist.slug]?.data?.firstOrNull()?.pictures?.large
-                                    ?: playlist.owner.pictures.large,
-                                slug = playlist.slug
-                            )
-                        } ?: emptyList()
-
-                        _catchupCardDataset.value = dataset
-                        Log.d("CatchUpViewModel", "fetchPlaylist success")
-                    }
+                    _catchupCardDataset.value = dataset
+                    Log.d("CatchUpViewModel", "fetchPlaylist success")
                 }
-
-                override fun onFailure(call: Call<MixCloudPlaylist>, t: Throwable) {
-//                    _artworkUrl.value = null
-                    Log.d("CatchUpViewModel", "fetchPlaylist fail")
-                }
-            })
+            } catch (e: Exception) {
+                Log.e("CatchUpViewModel", "fetchPlaylist failed", e)
+            }
         }
     }
 
     fun fetchCloudcastData(key: String) {
-
         val currentTime = System.currentTimeMillis()
 
-        // Check if the key is already fetched or the last request was within the timeout period
         if (fetchedKeys.contains(key)) {
             Log.d("CatchUpViewModel", "$key request skipped - already fetched")
             return
         }
-        // Check if the key is already fetched or the last request was within the timeout period
-        if ((lastRequestTimes[key]?.let { currentTime - it < timeoutMillis } == true)) {
+        if (lastRequestTimes[key]?.let { currentTime - it < timeoutMillis } == true) {
             Log.d("CatchUpViewModel", "$key request skipped - timeout")
             return
         }
 
-        // Update the last request time
         lastRequestTimes[key] = currentTime
 
         viewModelScope.launch {
-            val call = repository.getCloudcast(key)
-            call.enqueue(object : Callback<MixCloudCloudcast> {
-                override fun onResponse(call: Call<MixCloudCloudcast>, response: Response<MixCloudCloudcast>) {
-                    if (response.isSuccessful) {
-                        val cloudcast = response.body()
-                        _cloudcastData.update { it + (key to cloudcast) }
+            try {
+                val response = repository.getCloudcast(key)
+                if (response.isSuccessful) {
+                    val cloudcast = response.body()
+                    _cloudcastData.update { it + (key to cloudcast) }
 
-                        fetchedKeys.add(key)
+                    fetchedKeys.add(key)
 
-                        _catchupCardDataset.update { currentList ->
-                            currentList.map { item ->
-                                if (item.slug == key) {
-                                    item.copy(thumbnail = cloudcast?.data?.firstOrNull()?.pictures?.large ?: item.thumbnail)
-                                } else item
-                            }
+                    _catchupCardDataset.update { currentList ->
+                        currentList.map { item ->
+                            if (item.slug == key) {
+                                item.copy(thumbnail = cloudcast?.data?.firstOrNull()?.pictures?.large ?: item.thumbnail)
+                            } else item
                         }
-
-//                        val updatedList = _catchupCardDataset.value?.map { item ->
-//                            if (item.slug == key) {
-//                                item.copy(thumbnail = cloudcast?.data?.first()?.pictures?.large ?: item.thumbnail)
-//                            } else item
-//                        } ?: emptyList()
-//                        _catchupCardDataset.value = updatedList
-
-                        Log.d("CatchUpViewModel", "fetchCloudcastData success $key")
                     }
-                }
 
-                override fun onFailure(call: Call<MixCloudCloudcast>, t: Throwable) {
-
-                    Log.d("CatchUpViewModel", "fetchCloudcastData fail")
+                    Log.d("CatchUpViewModel", "fetchCloudcastData success $key")
                 }
-            })
+            } catch (e: Exception) {
+                Log.e("CatchUpViewModel", "fetchCloudcastData failed $key", e)
+            }
         }
     }
 
