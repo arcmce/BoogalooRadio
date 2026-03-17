@@ -3,6 +3,7 @@ package com.arcmce.boogaloo.ui.viewmodel
 import android.app.Application
 import android.content.ComponentName
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -37,6 +38,9 @@ class LiveViewModel(private val repository: Repository, private val application:
 
     private val _artworkUrl = MutableStateFlow<String?>(null)
     val artworkUrl: StateFlow<String?> = _artworkUrl
+
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error
 
     init {
         setupPlayer()
@@ -91,6 +95,7 @@ class LiveViewModel(private val repository: Repository, private val application:
             call.enqueue(object : Callback<RadioInfo> {
                 override fun onResponse(call: Call<RadioInfo>, response: Response<RadioInfo>) {
                     if (response.isSuccessful) {
+                        _error.value = null
                         _title.value = response.body()?.currentTrack?.title
 
                         val newArtworkUrl = response.body()?.currentTrack?.artworkUrlLarge
@@ -103,11 +108,14 @@ class LiveViewModel(private val repository: Repository, private val application:
 
                     } else {
                         _artworkUrl.value = null
+                        _error.value = "Failed to load track info (${response.code()})"
                     }
                 }
 
                 override fun onFailure(call: Call<RadioInfo>, t: Throwable) {
                     _artworkUrl.value = null
+                    _error.value = "Network error: ${t.message}"
+                    Log.e("LiveViewModel", "fetchRadioInfo failed", t)
                 }
             })
         }

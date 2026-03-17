@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -34,6 +36,7 @@ fun LiveView(
 
     val artworkUrl by viewModel.artworkUrl.collectAsState()
     val title by viewModel.title.observeAsState()
+    val error by viewModel.error.collectAsState()
 
     val isDarkTheme by sharedViewModel.isDarkTheme.collectAsState()
 
@@ -109,6 +112,15 @@ fun LiveView(
                     .padding(16.dp)
                     .padding(bottom = 48.dp),
                 contentScale = ContentScale.Crop
+            )
+        }
+
+        error?.let {
+            Text(
+                text = it,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(8.dp)
             )
         }
 
