@@ -19,6 +19,7 @@ import com.arcmce.boogaloo.network.repository.Repository
 import com.arcmce.boogaloo.playback.PlaybackService
 import com.arcmce.boogaloo.util.AppConstants
 import com.google.common.util.concurrent.MoreExecutors
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -39,6 +40,16 @@ class LiveViewModel(private val repository: Repository, private val application:
 
     init {
         setupPlayer()
+        startPolling()
+    }
+
+    private fun startPolling() {
+        viewModelScope.launch {
+            while (true) {
+                fetchRadioInfo()
+                delay(10_000)
+            }
+        }
     }
 
     fun setupPlayer() {

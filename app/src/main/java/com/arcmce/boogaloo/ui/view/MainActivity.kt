@@ -63,10 +63,6 @@ import com.arcmce.boogaloo.ui.viewmodel.LiveViewModel
 import com.arcmce.boogaloo.ui.viewmodel.LiveViewModelFactory
 import com.arcmce.boogaloo.ui.viewmodel.SharedViewModel
 import com.arcmce.boogaloo.ui.viewmodel.SharedViewModelFactory
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 
 data class TabBarItem(
@@ -112,25 +108,6 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        startBackgroundCoroutine(liveViewModel)
-    }
-
-    private fun startBackgroundCoroutine(liveViewModel: LiveViewModel) {
-
-        val context = this
-
-        val scope = CoroutineScope(Dispatchers.Default)
-
-        // Start a coroutine that runs every 10 seconds
-        scope.launch {
-            while (true) {
-                // Update data in the ViewModel or any other relevant logic
-                liveViewModel.fetchRadioInfo()
-
-                // Delay for 10 seconds
-                delay(10_000)
-            }
-        }
     }
 }
 
