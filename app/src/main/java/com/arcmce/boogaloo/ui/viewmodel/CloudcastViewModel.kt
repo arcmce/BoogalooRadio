@@ -37,13 +37,15 @@ class CloudcastViewModel(private val repository: Repository) : ViewModel() {
             try {
                 val response = repository.getCloudcast(slug)
                 if (response.isSuccessful) {
-                    _cloudcastCardDataset.value = response.body()?.data?.map { item ->
-                        CloudcastCardItem(
-                            name = item.name,
-                            thumbnail = item.pictures.large,
-                            url = item.url
-                        )
-                    } ?: emptyList()
+                    _cloudcastCardDataset.value = response.body()?.data
+                        ?.sortedByDescending { it.createdTime }
+                        ?.map { item ->
+                            CloudcastCardItem(
+                                name = item.name,
+                                thumbnail = item.pictures.large,
+                                url = item.url
+                            )
+                        } ?: emptyList()
                     Log.d("CloudcastViewModel", "setting readyForSlug=$slug")
                     _readyForSlug.value = slug
                     Log.d("CloudcastViewModel", "loadCloudcast success $slug")
