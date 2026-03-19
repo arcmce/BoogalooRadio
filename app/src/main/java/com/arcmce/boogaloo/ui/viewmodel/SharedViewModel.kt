@@ -13,7 +13,6 @@ import androidx.palette.graphics.Palette.Swatch
 import coil.ImageLoader
 import coil.request.ImageRequest
 import coil.request.SuccessResult
-import com.arcmce.boogaloo.network.model.MixCloudCloudcast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -56,18 +55,6 @@ class SharedViewModel(private val application: Application) : AndroidViewModel(a
 
     private val _artworkColorSwatch = MutableStateFlow<Swatch?>(null)
     val artworkColorSwatch: StateFlow<Swatch?> = _artworkColorSwatch
-
-    private val _cloudcast = MutableStateFlow<MixCloudCloudcast?>(null)
-    val cloudcast: StateFlow<MixCloudCloudcast?> = _cloudcast
-
-    // Function to set CloudcastData
-    fun setCloudcast(data: MixCloudCloudcast?) {
-        _cloudcast.value = data
-    }
-
-    fun getCloudcast(): MixCloudCloudcast? {
-        return _cloudcast.value
-    }
 
     private fun getArtworkSwatchFromPalette() {
         val swatch: Swatch? = if (isDarkTheme.value) {

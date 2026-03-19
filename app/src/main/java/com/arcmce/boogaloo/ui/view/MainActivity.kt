@@ -48,6 +48,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -59,6 +60,7 @@ import com.arcmce.boogaloo.ui.theme.BoogalooJetpackTheme
 import com.arcmce.boogaloo.ui.viewmodel.CatchUpViewModel
 import com.arcmce.boogaloo.ui.viewmodel.CatchUpViewModelFactory
 import com.arcmce.boogaloo.ui.viewmodel.CloudcastViewModel
+import com.arcmce.boogaloo.ui.viewmodel.CloudcastViewModelFactory
 import com.arcmce.boogaloo.ui.viewmodel.LiveViewModel
 import com.arcmce.boogaloo.ui.viewmodel.LiveViewModelFactory
 import com.arcmce.boogaloo.ui.viewmodel.SharedViewModel
@@ -84,7 +86,7 @@ class MainActivity : ComponentActivity() {
         val sharedViewModel: SharedViewModel by viewModels { SharedViewModelFactory(application) }
         val liveViewModel: LiveViewModel by viewModels { LiveViewModelFactory(repository, application) }
         val catchUpViewModel: CatchUpViewModel by viewModels { CatchUpViewModelFactory(repository) }
-        val cloudcastViewModel: CloudcastViewModel by viewModels()
+        val cloudcastViewModelFactory = CloudcastViewModelFactory(repository)
 
         setContent {
             BoogalooJetpackTheme {
@@ -103,7 +105,7 @@ class MainActivity : ComponentActivity() {
                     liveViewModel = liveViewModel,
                     catchUpViewModel = catchUpViewModel,
                     sharedViewModel = sharedViewModel,
-                    cloudcastViewModel = cloudcastViewModel,
+                    cloudcastViewModelFactory = cloudcastViewModelFactory,
                     context = this)
             }
         }
@@ -118,7 +120,7 @@ fun AppContent(
     liveViewModel: LiveViewModel,
     catchUpViewModel: CatchUpViewModel,
     sharedViewModel: SharedViewModel,
-    cloudcastViewModel: CloudcastViewModel,
+    cloudcastViewModelFactory: CloudcastViewModelFactory,
     context: Context,
 ) {
     val isDarkTheme = isSystemInDarkTheme()
@@ -174,9 +176,13 @@ fun AppContent(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     composable(liveTab.title) { LiveView(liveViewModel, sharedViewModel )}
-                    composable(catchUpTab.title) { CatchUpView(catchUpViewModel, sharedViewModel, navController) }
+                    composable(catchUpTab.title) { CatchUpView(catchUpViewModel, navController) }
 
-                    composable("pastShow/{slug}") { CloudcastView(cloudcastViewModel, sharedViewModel) }
+                    composable("pastShow/{slug}") { backStackEntry ->
+                        val slug = backStackEntry.arguments?.getString("slug") ?: return@composable
+                        val cloudcastViewModel: CloudcastViewModel = viewModel(backStackEntry, factory = cloudcastViewModelFactory)
+                        CloudcastView(cloudcastViewModel, slug)
+                    }
                 }
 
                 // TODO become visible when service state is playing

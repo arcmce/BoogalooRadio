@@ -33,19 +33,15 @@ import coil.request.ImageRequest
 import com.arcmce.boogaloo.R
 import com.arcmce.boogaloo.ui.viewmodel.CatchUpCardItem
 import com.arcmce.boogaloo.ui.viewmodel.CatchUpViewModel
-import com.arcmce.boogaloo.ui.viewmodel.SharedViewModel
 
 @Composable
 fun CatchUpView(
     viewModel: CatchUpViewModel,
-    sharedViewModel: SharedViewModel,
     navController: NavController
 ) {
     LaunchedEffect(Unit) {
         viewModel.fetchPlaylist()
     }
-
-//    val cardItems by viewModel.catchupCardDataset.collectAsState(initial = emptyList())
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -54,9 +50,7 @@ fun CatchUpView(
     ) {
         CatchUpVerticalGrid(
             viewModel,
-            sharedViewModel,
             navController
-//            cardItems
         )
     }
 }
@@ -64,8 +58,6 @@ fun CatchUpView(
 @Composable
 fun CatchUpVerticalGrid(
     viewModel: CatchUpViewModel,
-    sharedViewModel: SharedViewModel,
-//    items: List<CatchUpCardItem>
     navController: NavController
 ) {
 
@@ -104,8 +96,6 @@ fun CatchUpVerticalGrid(
 
             CardItemView(
                 item,
-                viewModel,
-                sharedViewModel,
                 navController
             )
         }
@@ -115,23 +105,16 @@ fun CatchUpVerticalGrid(
 @Composable
 fun CardItemView(
     item: CatchUpCardItem,
-    viewModel: CatchUpViewModel,
-    sharedViewModel: SharedViewModel,
-    navController: NavController) {
-
-//    val viewModel: CatchUpViewModel = viewModel()
-
+    navController: NavController
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight(),
         elevation = CardDefaults.cardElevation(4.dp),
         onClick = {
-            val cloudcast = viewModel.getCloudcast(item.slug)
-            sharedViewModel.setCloudcast(cloudcast)
-            navController.navigate("pastShow/${item.slug}") {
-                // Pass cloudcastData as a parameter or using a shared ViewModel
-            }
+            Log.d("CatchUpView", "card tapped: navigating to pastShow/${item.slug}")
+            navController.navigate("pastShow/${item.slug}")
         }
     ) {
         Column {
