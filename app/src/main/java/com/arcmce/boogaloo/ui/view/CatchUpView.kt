@@ -13,7 +13,9 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +32,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.arcmce.boogaloo.ui.viewmodel.SharedViewModel
+import kotlinx.coroutines.launch
 import coil.request.ImageRequest
 import com.arcmce.boogaloo.R
 import com.arcmce.boogaloo.ui.viewmodel.CatchUpCardItem
@@ -38,10 +42,20 @@ import com.arcmce.boogaloo.ui.viewmodel.CatchUpViewModel
 @Composable
 fun CatchUpView(
     viewModel: CatchUpViewModel,
-    navController: NavController
+    navController: NavController,
+    sharedViewModel: SharedViewModel
 ) {
     LaunchedEffect(Unit) {
         viewModel.fetchPlaylist()
+    }
+
+    val gridState = rememberLazyGridState()
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        sharedViewModel.catchUpScrollToTop.collect {
+            coroutineScope.launch { gridState.animateScrollToItem(0) }
+        }
     }
 
     Column(
@@ -51,7 +65,8 @@ fun CatchUpView(
     ) {
         CatchUpVerticalGrid(
             viewModel,
-            navController
+            navController,
+            gridState
         )
     }
 }
@@ -59,12 +74,9 @@ fun CatchUpView(
 @Composable
 fun CatchUpVerticalGrid(
     viewModel: CatchUpViewModel,
-    navController: NavController
+    navController: NavController,
+    gridState: LazyGridState
 ) {
-
-//    val viewModel: CatchUpViewModel = viewModel()
-
-    val gridState = rememberLazyGridState()
 
     val cardItems by viewModel.catchupCardDataset.collectAsState(initial = emptyList())
 

@@ -14,11 +14,20 @@ import coil.ImageLoader
 import coil.request.ImageRequest
 import coil.request.SuccessResult
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class SharedViewModel(private val application: Application) : AndroidViewModel(application) {
+
+    private val _catchUpScrollToTop = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val catchUpScrollToTop: SharedFlow<Unit> = _catchUpScrollToTop
+
+    fun triggerCatchUpScrollToTop() {
+        _catchUpScrollToTop.tryEmit(Unit)
+    }
 
     private val _isDarkTheme = MutableStateFlow(false)
     val isDarkTheme: StateFlow<Boolean> = _isDarkTheme

@@ -162,7 +162,7 @@ fun AppContent(
                 )
             },
             bottomBar = {
-                TabView(tabBarItems, navController)
+                TabView(tabBarItems, navController, sharedViewModel)
             }
         ) { innerPadding ->
             Box(
@@ -177,7 +177,7 @@ fun AppContent(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     composable(liveTab.title) { LiveView(liveViewModel, sharedViewModel )}
-                    composable(catchUpTab.title) { CatchUpView(catchUpViewModel, navController) }
+                    composable(catchUpTab.title) { CatchUpView(catchUpViewModel, navController, sharedViewModel) }
 
                     composable("pastShow/{slug}") { backStackEntry ->
                         val slug = backStackEntry.arguments?.getString("slug") ?: return@composable
@@ -204,7 +204,7 @@ fun AppContent(
 // This is a wrapper view that allows us to easily and cleanly
 // reuse this component in any future project
 @Composable
-fun TabView(tabBarItems: List<TabBarItem>, navController: NavController) {
+fun TabView(tabBarItems: List<TabBarItem>, navController: NavController, sharedViewModel: SharedViewModel) {
     var selectedTabIndex by rememberSaveable {
         mutableStateOf(0)
     }
@@ -229,13 +229,20 @@ fun TabView(tabBarItems: List<TabBarItem>, navController: NavController) {
             NavigationBarItem(
                 selected = selectedTabIndex == index,
                 onClick = {
-                    selectedTabIndex = index
-                    navController.navigate(tabBarItem.title) {
-                        popUpTo(navController.graph.startDestinationId) {
-                            saveState = true
+                    if (index == selectedTabIndex) {
+                        val popped = navController.popBackStack(tabBarItem.title, inclusive = false)
+                        if (!popped && tabBarItem.title == "CatchUp") {
+                            sharedViewModel.triggerCatchUpScrollToTop()
                         }
-                        launchSingleTop = true
-                        restoreState = true
+                    } else {
+                        selectedTabIndex = index
+                        navController.navigate(tabBarItem.title) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     }
                 },
                 icon = {
