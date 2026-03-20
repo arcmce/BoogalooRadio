@@ -7,9 +7,12 @@ import com.arcmce.boogaloo.BuildConfig
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -41,6 +44,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
@@ -60,6 +68,13 @@ import com.google.common.util.concurrent.MoreExecutors
 fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifier: Modifier = Modifier) {
 
     var player by remember { mutableStateOf<Player?>(null) }
+
+    var isPressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.96f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
+        label = "barScale"
+    )
 
     val isPlaying by sharedViewModel.isPlaying.collectAsState()
 
@@ -110,11 +125,18 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
             .padding(horizontal = 12.dp)
             .wrapContentHeight()
             .heightIn(min = 24.dp, max = 48.dp)
-//            .height(64.dp)
+            .graphicsLayer { scaleX = scale; scaleY = scale }
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false)
+                    isPressed = true
+                    waitForUpOrCancellation()
+                    isPressed = false
+                }
+            }
             .background(
-//                color = MaterialTheme.colorScheme.primaryContainer,
                 color = Color(artworkColorSwatch?.rgb ?: Color.Gray.toArgb()),
-                shape = RoundedCornerShape(10.dp) // Adjust the corner radius as needed
+                shape = RoundedCornerShape(10.dp)
             ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
