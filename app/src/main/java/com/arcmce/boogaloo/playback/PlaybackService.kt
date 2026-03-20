@@ -8,6 +8,7 @@ import com.arcmce.boogaloo.BuildConfig
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.util.EventLogger
 import androidx.media3.session.MediaSession
@@ -25,8 +26,13 @@ class PlaybackService : MediaSessionService() {
         if (BuildConfig.DEBUG) Log.d("PlaybackService", "PlaybackService created")
 
         // Initialize the ExoPlayer
+        val loadControl = DefaultLoadControl.Builder()
+            .setBufferDurationsMs(10_000, 30_000, 1_500, 3_000)
+            .build()
+
         player = ExoPlayer.Builder(this)
             .setAudioAttributes(AudioAttributes.DEFAULT, /* handleAudioFocus= */ true)
+            .setLoadControl(loadControl)
             .build()
         player.addAnalyticsListener(EventLogger())
 
