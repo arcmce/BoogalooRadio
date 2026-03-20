@@ -77,7 +77,7 @@ fun CloudcastVerticalGrid(
 
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 128.dp),
-        contentPadding = PaddingValues(16.dp),
+        contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 72.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         state = gridState,
