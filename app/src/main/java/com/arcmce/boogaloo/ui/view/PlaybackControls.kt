@@ -4,15 +4,26 @@ import android.content.ComponentName
 import android.content.Context
 import android.util.Log
 import com.arcmce.boogaloo.BuildConfig
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -171,6 +182,13 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
             overflow = TextOverflow.Ellipsis // Fallback for no marquee support
         )
 
+        AnimatedVisibility(visible = isPlaying) {
+            EqualizerBars(
+                color = Color(artworkColorSwatch?.bodyTextColor ?: Color.White.toArgb()),
+                modifier = Modifier.padding(end = 8.dp)
+            )
+        }
+
         IconButton(onClick = {
             if (isPlaying) {
                 player?.pause()
@@ -188,6 +206,42 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
                 painter = painterResource(id = iconRes),
                 contentDescription = contentDescription,
                 tint = Color(artworkColorSwatch?.bodyTextColor ?: Color.White.toArgb())
+            )
+        }
+    }
+}
+
+@Composable
+fun EqualizerBars(color: Color, modifier: Modifier = Modifier) {
+    val transition = rememberInfiniteTransition(label = "equalizer")
+
+    val bar1 by transition.animateFloat(
+        initialValue = 0.25f, targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(500, easing = LinearEasing), RepeatMode.Reverse),
+        label = "bar1"
+    )
+    val bar2 by transition.animateFloat(
+        initialValue = 1f, targetValue = 0.3f,
+        animationSpec = infiniteRepeatable(tween(700, easing = LinearEasing), RepeatMode.Reverse),
+        label = "bar2"
+    )
+    val bar3 by transition.animateFloat(
+        initialValue = 0.5f, targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(600, easing = LinearEasing), RepeatMode.Reverse),
+        label = "bar3"
+    )
+
+    Row(
+        modifier = modifier.height(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        verticalAlignment = Alignment.Bottom
+    ) {
+        listOf(bar1, bar2, bar3).forEach { fraction ->
+            Box(
+                modifier = Modifier
+                    .width(3.dp)
+                    .fillMaxHeight(fraction)
+                    .background(color)
             )
         }
     }
