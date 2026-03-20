@@ -1,6 +1,7 @@
 package com.arcmce.boogaloo.ui.viewmodel
 
 import android.util.Log
+import com.arcmce.boogaloo.BuildConfig
 import androidx.lifecycle.*
 import com.arcmce.boogaloo.network.model.MixCloudPlaylist
 import com.arcmce.boogaloo.network.repository.Repository
@@ -38,10 +39,10 @@ class CatchUpViewModel(private val repository: Repository) : ViewModel() {
                     } ?: emptyList()
 
                     _catchupCardDataset.value = dataset
-                    Log.d("CatchUpViewModel", "fetchPlaylist success")
+                    if (BuildConfig.DEBUG) Log.d("CatchUpViewModel", "fetchPlaylist success")
                 }
             } catch (e: Exception) {
-                Log.e("CatchUpViewModel", "fetchPlaylist failed", e)
+                if (BuildConfig.DEBUG) Log.e("CatchUpViewModel", "fetchPlaylist failed", e)
             }
         }
     }
@@ -62,10 +63,10 @@ class CatchUpViewModel(private val repository: Repository) : ViewModel() {
                             } else item
                         }
                     }
-                    Log.d("CatchUpViewModel", "fetchCloudcastData success $key")
+                    if (BuildConfig.DEBUG) Log.d("CatchUpViewModel", "fetchCloudcastData success $key")
                 }
             } catch (e: Exception) {
-                Log.e("CatchUpViewModel", "fetchCloudcastData failed $key", e)
+                if (BuildConfig.DEBUG) Log.e("CatchUpViewModel", "fetchCloudcastData failed $key", e)
                 fetchedKeys.remove(key)
             }
         }

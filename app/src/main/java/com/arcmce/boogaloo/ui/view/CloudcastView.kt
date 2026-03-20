@@ -3,6 +3,7 @@ package com.arcmce.boogaloo.ui.view
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import com.arcmce.boogaloo.BuildConfig
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -39,10 +40,10 @@ fun CloudcastView(
     viewModel: CloudcastViewModel,
     slug: String
 ) {
-    Log.d("CloudcastView", "CloudcastView composed: slug=$slug, instance=${System.identityHashCode(viewModel)}")
+    if (BuildConfig.DEBUG) Log.d("CloudcastView", "CloudcastView composed: slug=$slug, instance=${System.identityHashCode(viewModel)}")
 
     LaunchedEffect(slug) {
-        Log.d("CloudcastView", "LaunchedEffect firing: slug=$slug")
+        if (BuildConfig.DEBUG) Log.d("CloudcastView", "LaunchedEffect firing: slug=$slug")
         viewModel.loadCloudcast(slug)
     }
 
@@ -52,10 +53,10 @@ fun CloudcastView(
 
     val readyForSlug by viewModel.readyForSlug.collectAsState()
 
-    Log.d("CloudcastView", "readyForSlug=$readyForSlug slug=$slug lifecycleState=$lifecycleState showing=${readyForSlug == slug}")
+    if (BuildConfig.DEBUG) Log.d("CloudcastView", "readyForSlug=$readyForSlug slug=$slug lifecycleState=$lifecycleState showing=${readyForSlug == slug}")
 
     if (readyForSlug == slug && lifecycleState.isAtLeast(Lifecycle.State.STARTED)) {
-        Log.d("CloudcastView", "GRID IS VISIBLE for slug=$slug")
+        if (BuildConfig.DEBUG) Log.d("CloudcastView", "GRID IS VISIBLE for slug=$slug")
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Center,
@@ -101,8 +102,8 @@ fun CloudcastCardItemView(item: CloudcastCardItem, isResumed: Boolean) {
             .fillMaxWidth()
             .wrapContentHeight()
             .then(if (isResumed) Modifier.clickable {
-                Log.d("CloudcastView", "onItemClicked " + item.name)
-                Log.d("CloudcastView", "onItemClicked " + item.url)
+                if (BuildConfig.DEBUG) Log.d("CloudcastView", "onItemClicked " + item.name)
+                if (BuildConfig.DEBUG) Log.d("CloudcastView", "onItemClicked " + item.url)
                 val intent = Intent(Intent.ACTION_VIEW)
                 intent.data = Uri.parse(item.url)
                 context.startActivity(intent)

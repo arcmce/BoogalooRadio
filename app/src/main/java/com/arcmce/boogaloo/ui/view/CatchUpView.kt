@@ -1,6 +1,7 @@
 package com.arcmce.boogaloo.ui.view
 
 import android.util.Log
+import com.arcmce.boogaloo.BuildConfig
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -71,13 +72,13 @@ fun CatchUpVerticalGrid(
     LaunchedEffect(gridState) {
         snapshotFlow { gridState.layoutInfo.visibleItemsInfo }
             .collect { visibleItems ->
-                Log.d("CatchUpView", "Visible items: $visibleItems")
+                if (BuildConfig.DEBUG) Log.d("CatchUpView", "Visible items: $visibleItems")
 
                 visibleItems.forEach { itemInfo ->
                     val item = cardItems.getOrNull(itemInfo.index)
                     if (item != null) {
                         viewModel.fetchCloudcastData(item.slug)
-                        Log.d("CatchUpView", "Fetching thumbnail for index: ${itemInfo.index}")
+                        if (BuildConfig.DEBUG) Log.d("CatchUpView", "Fetching thumbnail for index: ${itemInfo.index}")
                     }
                 }
             }
@@ -113,7 +114,7 @@ fun CardItemView(
             .wrapContentHeight(),
         elevation = CardDefaults.cardElevation(4.dp),
         onClick = {
-            Log.d("CatchUpView", "card tapped: navigating to pastShow/${item.slug}")
+            if (BuildConfig.DEBUG) Log.d("CatchUpView", "card tapped: navigating to pastShow/${item.slug}")
             navController.navigate("pastShow/${item.slug}")
         }
     ) {

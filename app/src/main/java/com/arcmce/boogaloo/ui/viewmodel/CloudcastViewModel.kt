@@ -1,6 +1,7 @@
 package com.arcmce.boogaloo.ui.viewmodel
 
 import android.util.Log
+import com.arcmce.boogaloo.BuildConfig
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -19,7 +20,7 @@ data class CloudcastCardItem(
 class CloudcastViewModel(private val repository: Repository) : ViewModel() {
 
     init {
-        Log.d("CloudcastViewModel", "NEW INSTANCE created: ${System.identityHashCode(this)}")
+        if (BuildConfig.DEBUG) Log.d("CloudcastViewModel", "NEW INSTANCE created: ${System.identityHashCode(this)}")
     }
 
     private val _cloudcastCardDataset = MutableStateFlow<List<CloudcastCardItem>>(emptyList())
@@ -29,11 +30,11 @@ class CloudcastViewModel(private val repository: Repository) : ViewModel() {
     val readyForSlug: StateFlow<String?> = _readyForSlug
 
     fun loadCloudcast(slug: String) {
-        Log.d("CloudcastViewModel", "loadCloudcast called: slug=$slug, instance=${System.identityHashCode(this)}, readyForSlug was=${_readyForSlug.value}")
+        if (BuildConfig.DEBUG) Log.d("CloudcastViewModel", "loadCloudcast called: slug=$slug, instance=${System.identityHashCode(this)}, readyForSlug was=${_readyForSlug.value}")
         _readyForSlug.value = null
         _cloudcastCardDataset.value = emptyList()
         viewModelScope.launch {
-            Log.d("CloudcastViewModel", "fetching slug=$slug")
+            if (BuildConfig.DEBUG) Log.d("CloudcastViewModel", "fetching slug=$slug")
             try {
                 val response = repository.getCloudcast(slug)
                 if (response.isSuccessful) {
@@ -46,12 +47,12 @@ class CloudcastViewModel(private val repository: Repository) : ViewModel() {
                                 url = item.url
                             )
                         } ?: emptyList()
-                    Log.d("CloudcastViewModel", "setting readyForSlug=$slug")
+                    if (BuildConfig.DEBUG) Log.d("CloudcastViewModel", "setting readyForSlug=$slug")
                     _readyForSlug.value = slug
-                    Log.d("CloudcastViewModel", "loadCloudcast success $slug")
+                    if (BuildConfig.DEBUG) Log.d("CloudcastViewModel", "loadCloudcast success $slug")
                 }
             } catch (e: Exception) {
-                Log.e("CloudcastViewModel", "loadCloudcast failed $slug", e)
+                if (BuildConfig.DEBUG) Log.e("CloudcastViewModel", "loadCloudcast failed $slug", e)
             }
         }
     }

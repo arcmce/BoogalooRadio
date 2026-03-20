@@ -4,6 +4,7 @@ package com.arcmce.boogaloo.playback
 import android.app.PendingIntent
 import android.content.Intent
 import android.util.Log
+import com.arcmce.boogaloo.BuildConfig
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -21,7 +22,7 @@ class PlaybackService : MediaSessionService() {
 //    TODO if not immediately played it buffers - run seek to current on first play
     override fun onCreate() {
         super.onCreate()
-        Log.d("PlaybackService", "PlaybackService created")
+        if (BuildConfig.DEBUG) Log.d("PlaybackService", "PlaybackService created")
 
         // Initialize the ExoPlayer
         player = ExoPlayer.Builder(this)
@@ -57,7 +58,7 @@ class PlaybackService : MediaSessionService() {
         // Prepare the player to play the media
         player.prepare()
 
-        Log.d("PlaybackService", "MediaSession created")
+        if (BuildConfig.DEBUG) Log.d("PlaybackService", "MediaSession created")
 
     }
 
@@ -73,7 +74,7 @@ class PlaybackService : MediaSessionService() {
     }
 
     override fun onDestroy() {
-        Log.d("PlaybackService", "onDestroy called")
+        if (BuildConfig.DEBUG) Log.d("PlaybackService", "onDestroy called")
         mediaSession?.run {
             player.release()
             release()
@@ -84,7 +85,7 @@ class PlaybackService : MediaSessionService() {
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
-        Log.d("PlaybackService", "onGetSession called")
+        if (BuildConfig.DEBUG) Log.d("PlaybackService", "onGetSession called")
         return mediaSession
     }
 }

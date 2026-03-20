@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.ComponentName
 import android.net.Uri
 import android.util.Log
+import com.arcmce.boogaloo.BuildConfig
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -106,7 +107,7 @@ class LiveViewModel(private val repository: Repository, private val application:
         } catch (e: Exception) {
             _artworkUrl.value = null
             _error.value = "Network error: ${e.message}"
-            Log.e("LiveViewModel", "fetchRadioInfo failed", e)
+            if (BuildConfig.DEBUG) Log.e("LiveViewModel", "fetchRadioInfo failed", e)
         }
     }
 

@@ -3,6 +3,7 @@ package com.arcmce.boogaloo.ui.view
 import android.content.Context
 import android.os.Bundle
 import android.util.Log
+import com.arcmce.boogaloo.BuildConfig
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -134,7 +135,7 @@ fun AppContent(
     val navController = rememberNavController()
 
     LaunchedEffect(isDarkTheme) {
-        Log.d("MainActivity", "theme change detected")
+        if (BuildConfig.DEBUG) Log.d("MainActivity", "theme change detected")
         sharedViewModel.setIsDarkTheme(isDarkTheme)
     }
 

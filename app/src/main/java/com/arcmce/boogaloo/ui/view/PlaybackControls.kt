@@ -3,6 +3,7 @@ package com.arcmce.boogaloo.ui.view
 import android.content.ComponentName
 import android.content.Context
 import android.util.Log
+import com.arcmce.boogaloo.BuildConfig
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
@@ -70,7 +71,7 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
                 player?.addListener(
                     object : Player.Listener {
                         override fun onIsPlayingChanged(isPlaying: Boolean) {
-                            Log.d("PlaybackControls", "onIsPlayingChanged ${player?.playbackState}")
+                            if (BuildConfig.DEBUG) Log.d("PlaybackControls", "onIsPlayingChanged ${player?.playbackState}")
                             if (player?.playbackState == Player.STATE_READY) {
                                 sharedViewModel.setPlayingState(isPlaying)
                             }
@@ -78,7 +79,7 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
                     }
                 )
 
-                Log.d("PlaybackControls", "controllerfuture ${player == null}")
+                if (BuildConfig.DEBUG) Log.d("PlaybackControls", "controllerfuture ${player == null}")
             },
             MoreExecutors.directExecutor()
         )
@@ -173,11 +174,11 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
         IconButton(onClick = {
             if (isPlaying) {
                 player?.pause()
-                Log.d("PlaybackControls", "Pausing playback")
+                if (BuildConfig.DEBUG) Log.d("PlaybackControls", "Pausing playback")
             } else {
                 player?.seekToDefaultPosition()
                 player?.play()
-                Log.d("PlaybackControls", "Starting playback")
+                if (BuildConfig.DEBUG) Log.d("PlaybackControls", "Starting playback")
             }
         }) {
             val iconRes = if (isPlaying) R.drawable.ic_media_pause else R.drawable.ic_media_play
