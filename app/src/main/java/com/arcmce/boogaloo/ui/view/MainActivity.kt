@@ -186,7 +186,6 @@ fun AppContent(
                     }
                 }
 
-                // TODO become visible when service state is playing
                 PlaybackControls(
                     context,
                     sharedViewModel,

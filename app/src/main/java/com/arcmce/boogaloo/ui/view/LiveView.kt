@@ -56,7 +56,6 @@ fun LiveView(
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // TODO play button here?
         Spacer(modifier = Modifier.weight(1f))
 
         Box(
