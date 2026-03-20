@@ -14,7 +14,6 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
@@ -58,7 +57,6 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
-import coil.compose.AsyncImage
 import com.arcmce.boogaloo.R
 import com.arcmce.boogaloo.playback.PlaybackService
 import com.arcmce.boogaloo.ui.viewmodel.SharedViewModel
@@ -141,45 +139,9 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        artworkUrl?.let { url ->
-            if (url.isNotEmpty()) {
-                AsyncImage(
-                    model = url,
-                    contentDescription = "Current show artwork",
-                    modifier = Modifier
-                        .aspectRatio(1f)
-                        .clip(
-                            RoundedCornerShape(
-                                topStart = 10.dp,
-                                bottomStart = 10.dp,
-                                topEnd = 0.dp,
-                                bottomEnd = 0.dp
-                            )
-                        ),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Image(
-                    painter = painterResource(id = R.drawable.boogaloo_b),
-                    contentDescription = "Current show artwork placeholder",
-                    modifier =  Modifier
-                        .aspectRatio(1f)
-                        .clip(
-                            RoundedCornerShape(
-                                topStart = 10.dp,
-                                bottomStart = 10.dp,
-                                topEnd = 0.dp,
-                                bottomEnd = 0.dp
-                            )
-                        ),
-                    contentScale = ContentScale.Crop
-                )
-            }
-        } ?:
-        Image(
-            painter = painterResource(id = R.drawable.boogaloo_b),
-            contentDescription = "Current show artwork placeholder",
-            modifier =  Modifier
+        ArtworkImage(
+            url = artworkUrl,
+            modifier = Modifier
                 .aspectRatio(1f)
                 .clip(
                     RoundedCornerShape(
@@ -188,8 +150,7 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
                         topEnd = 0.dp,
                         bottomEnd = 0.dp
                     )
-                ),
-            contentScale = ContentScale.Crop
+                )
         )
 
         Text(
