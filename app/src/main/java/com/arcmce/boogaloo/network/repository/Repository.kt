@@ -6,6 +6,7 @@ import com.arcmce.boogaloo.network.api.RetrofitInstance
 import com.arcmce.boogaloo.network.model.MixCloudCloudcast
 import com.arcmce.boogaloo.network.model.MixCloudPlaylist
 import com.arcmce.boogaloo.network.model.RadioInfo
+import com.arcmce.boogaloo.network.model.ScheduleResponse
 import retrofit2.Response
 
 class Repository() {
@@ -17,6 +18,8 @@ class Repository() {
     private val cacheTtlMs = 2 * 60 * 1000L
 
     suspend fun getRadioInfo(): Response<RadioInfo> = radioApi.getRadioInfo()
+
+    suspend fun getSchedule(): Response<ScheduleResponse> = radioApi.getSchedule()
 
     suspend fun getPlaylist(): Response<MixCloudPlaylist> = mixCloudApi.getPlaylist()
 

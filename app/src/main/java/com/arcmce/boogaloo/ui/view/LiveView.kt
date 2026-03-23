@@ -1,5 +1,13 @@
 package com.arcmce.boogaloo.ui.view
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,10 +19,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -42,27 +54,43 @@ fun LiveView(
 
     val paperRes = if (isDarkTheme) R.drawable.paper_dark else R.drawable.paper_light
 
+    var scheduleOpen by remember { mutableStateOf(false) }
+
+    val topSpacerWeight by animateFloatAsState(
+        targetValue = if (scheduleOpen) 0.01f else 1f,
+        animationSpec = tween(400),
+        label = "topSpacerWeight"
+    )
+    val imageFraction by animateFloatAsState(
+        targetValue = if (scheduleOpen) 0.45f else 1f,
+        animationSpec = tween(400),
+        label = "imageFraction"
+    )
+    val imageHPadding by animateDpAsState(
+        targetValue = if (scheduleOpen) 8.dp else 16.dp,
+        animationSpec = tween(400),
+        label = "imageHPadding"
+    )
+    val artworkBottomPadding by animateDpAsState(
+        targetValue = if (scheduleOpen) 8.dp else 48.dp,
+        animationSpec = tween(400),
+        label = "artworkBottomPadding"
+    )
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-//            .padding(horizontal = 16.dp)
-//            .padding(bottom = 16.dp)
-//            .shadow(elevation = 2.dp)
-        ,
+        modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.weight(topSpacerWeight))
 
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
+                .fillMaxWidth(imageFraction)
+                .padding(horizontal = imageHPadding)
                 .aspectRatio(1f)
                 .shadow(elevation = 4.dp)
         ) {
-            // Frame image
             Image(
                 painter = painterResource(id = paperRes),
                 contentDescription = "Frame image",
@@ -75,7 +103,7 @@ fun LiveView(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp)
-                    .padding(bottom = 48.dp)
+                    .padding(bottom = artworkBottomPadding)
             )
         }
 
@@ -88,6 +116,24 @@ fun LiveView(
             )
         }
 
-        Spacer(modifier = Modifier.weight(1.5f))
+        TextButton(onClick = {
+            scheduleOpen = !scheduleOpen
+            sharedViewModel.setScheduleOpen(scheduleOpen)
+        }) {
+            Text(if (scheduleOpen) "Close" else "Schedule")
+        }
+
+        AnimatedVisibility(
+            visible = scheduleOpen,
+            enter = slideInVertically(tween(400)) { it } + fadeIn(tween(400)),
+            exit = slideOutVertically(tween(400)) { it } + fadeOut(tween(400)),
+            modifier = Modifier.weight(1f).fillMaxWidth()
+        ) {
+            SchedulePanel(viewModel = viewModel, isDarkTheme = isDarkTheme, modifier = Modifier.fillMaxSize())
+        }
+
+        if (!scheduleOpen) {
+            Spacer(modifier = Modifier.weight(1.5f))
+        }
     }
 }

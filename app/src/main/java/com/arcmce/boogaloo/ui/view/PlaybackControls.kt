@@ -52,6 +52,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
@@ -153,17 +154,35 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
                 )
         )
 
-        Text(
-            text = title ?: "Boogaloo Radio",
-            style = MaterialTheme.typography.bodyLarge,
-            color = Color(artworkColorSwatch?.bodyTextColor ?: Color.White.toArgb()),
+        val textColor = Color(artworkColorSwatch?.bodyTextColor ?: Color.White.toArgb())
+        val titleParts = title?.split(" - ", limit = 2)
+        val showName = titleParts?.getOrNull(0) ?: "Boogaloo Radio"
+        val hostName = titleParts?.getOrNull(1)
+
+        androidx.compose.foundation.layout.Column(
             modifier = Modifier
-                .weight(1f) // Make the text take up available space
-                .padding(horizontal = 16.dp) // Add padding between text and button
-                .basicMarquee(), // Add marquee scrolling
-            maxLines = 1, // Limit to one line
-            overflow = TextOverflow.Ellipsis // Fallback for no marquee support
-        )
+                .weight(1f)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = showName,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = textColor,
+                maxLines = 1,
+                modifier = Modifier.basicMarquee()
+            )
+            if (hostName != null) {
+                Text(
+                    text = hostName,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = textColor.copy(alpha = 0.75f),
+                    maxLines = 1,
+                    modifier = Modifier.basicMarquee()
+                )
+            }
+        }
 
         AnimatedVisibility(visible = isPlaying) {
             EqualizerBars(

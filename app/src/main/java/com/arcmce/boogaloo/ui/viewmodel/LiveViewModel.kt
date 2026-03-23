@@ -16,6 +16,7 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import com.arcmce.boogaloo.network.model.ScheduleItem
 import com.arcmce.boogaloo.network.repository.Repository
 import com.arcmce.boogaloo.playback.PlaybackService
 import com.arcmce.boogaloo.util.AppConstants
@@ -38,6 +39,15 @@ class LiveViewModel(private val repository: Repository, private val application:
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
+
+    private val _scheduleItems = MutableStateFlow<List<ScheduleItem>>(emptyList())
+    val scheduleItems: StateFlow<List<ScheduleItem>> = _scheduleItems
+
+    private val _scheduleLoading = MutableStateFlow(false)
+    val scheduleLoading: StateFlow<Boolean> = _scheduleLoading
+
+    private val _scheduleError = MutableStateFlow<String?>(null)
+    val scheduleError: StateFlow<String?> = _scheduleError
 
     init {
         setupPlayer()
@@ -108,6 +118,27 @@ class LiveViewModel(private val repository: Repository, private val application:
             _artworkUrl.value = null
             _error.value = "Network error: ${e.message}"
             if (BuildConfig.DEBUG) Log.e("LiveViewModel", "fetchRadioInfo failed", e)
+        }
+    }
+
+    fun fetchSchedule() {
+        if (_scheduleItems.value.isNotEmpty()) return
+        viewModelScope.launch {
+            _scheduleLoading.value = true
+            _scheduleError.value = null
+            try {
+                val response = repository.getSchedule()
+                if (response.isSuccessful) {
+                    _scheduleItems.value = response.body()?.data ?: emptyList()
+                } else {
+                    _scheduleError.value = "Failed to load schedule (${response.code()})"
+                }
+            } catch (e: Exception) {
+                _scheduleError.value = "Network error: ${e.message}"
+                if (BuildConfig.DEBUG) Log.e("LiveViewModel", "fetchSchedule failed", e)
+            } finally {
+                _scheduleLoading.value = false
+            }
         }
     }
 

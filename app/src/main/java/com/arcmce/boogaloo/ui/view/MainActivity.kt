@@ -9,6 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.runtime.collectAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -194,8 +195,9 @@ fun AppContent(
                 }
 
                 val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+                val isScheduleOpen by sharedViewModel.isScheduleOpen.collectAsState()
                 AnimatedVisibility(
-                    visible = currentRoute != liveTab.title,
+                    visible = currentRoute != liveTab.title || isScheduleOpen,
                     enter = fadeIn(animationSpec = tween(800)),
                     exit = fadeOut(animationSpec = tween(800)),
                     modifier = Modifier.align(Alignment.BottomCenter)
@@ -203,7 +205,7 @@ fun AppContent(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(100.dp)
+                            .height(60.dp)
                             .background(
                                 Brush.verticalGradient(
                                     0f to Color.Transparent,

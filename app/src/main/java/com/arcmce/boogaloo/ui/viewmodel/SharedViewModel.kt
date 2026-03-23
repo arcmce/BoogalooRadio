@@ -44,6 +44,13 @@ class SharedViewModel(private val application: Application) : AndroidViewModel(a
         _isPlaying.value = isPlaying
     }
 
+    private val _isScheduleOpen = MutableStateFlow(false)
+    val isScheduleOpen: StateFlow<Boolean> = _isScheduleOpen
+
+    fun setScheduleOpen(open: Boolean) {
+        _isScheduleOpen.value = open
+    }
+
     private val _liveTitle = MutableLiveData<String?>()
     val liveTitle: LiveData<String?> get() = _liveTitle
 
