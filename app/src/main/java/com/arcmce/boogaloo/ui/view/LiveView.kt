@@ -1,13 +1,8 @@
 package com.arcmce.boogaloo.ui.view
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,9 +13,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -30,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -46,11 +43,15 @@ fun LiveView(
     val artworkUrl by viewModel.artworkUrl.collectAsState()
     val title by viewModel.title.observeAsState()
     val error by viewModel.error.collectAsState()
+    val currentScheduleItem by viewModel.currentScheduleItem.collectAsState()
+
+    LaunchedEffect(Unit) { viewModel.fetchSchedule() }
 
     val isDarkTheme by sharedViewModel.isDarkTheme.collectAsState()
 
     sharedViewModel.setArtworkUrl(artworkUrl)
     sharedViewModel.setLiveTitle(title)
+    sharedViewModel.setCurrentScheduleItem(currentScheduleItem)
 
     val paperRes = if (isDarkTheme) R.drawable.paper_dark else R.drawable.paper_light
 
@@ -60,6 +61,26 @@ fun LiveView(
         targetValue = if (scheduleOpen) 0.01f else 1f,
         animationSpec = tween(400),
         label = "topSpacerWeight"
+    )
+    val bottomSpacerWeight by animateFloatAsState(
+        targetValue = if (scheduleOpen) 0.01f else 1.5f,
+        animationSpec = tween(400),
+        label = "bottomSpacerWeight"
+    )
+    val panelWeight by animateFloatAsState(
+        targetValue = if (scheduleOpen) 1f else 0.01f,
+        animationSpec = tween(400),
+        label = "panelWeight"
+    )
+    val panelAlpha by animateFloatAsState(
+        targetValue = if (scheduleOpen) 1f else 0f,
+        animationSpec = tween(400),
+        label = "panelAlpha"
+    )
+    val panelSlide by animateFloatAsState(
+        targetValue = if (scheduleOpen) 0f else 1f,
+        animationSpec = tween(400),
+        label = "panelSlide"
     )
     val imageFraction by animateFloatAsState(
         targetValue = if (scheduleOpen) 0.45f else 1f,
@@ -116,24 +137,28 @@ fun LiveView(
             )
         }
 
-        TextButton(onClick = {
-            scheduleOpen = !scheduleOpen
-            sharedViewModel.setScheduleOpen(scheduleOpen)
-        }) {
+        OutlinedButton(
+            onClick = {
+                scheduleOpen = !scheduleOpen
+                sharedViewModel.setScheduleOpen(scheduleOpen)
+            },
+            modifier = Modifier.padding(top = 12.dp)
+        ) {
             Text(if (scheduleOpen) "Close" else "Schedule")
         }
 
-        AnimatedVisibility(
-            visible = scheduleOpen,
-            enter = slideInVertically(tween(400)) { it } + fadeIn(tween(400)),
-            exit = slideOutVertically(tween(400)) { it } + fadeOut(tween(400)),
-            modifier = Modifier.weight(1f).fillMaxWidth()
+        Box(
+            modifier = Modifier
+                .weight(panelWeight)
+                .fillMaxWidth()
+                .graphicsLayer {
+                    alpha = panelAlpha
+                    translationY = size.height * panelSlide
+                }
         ) {
             SchedulePanel(viewModel = viewModel, isDarkTheme = isDarkTheme, modifier = Modifier.fillMaxSize())
         }
 
-        if (!scheduleOpen) {
-            Spacer(modifier = Modifier.weight(1.5f))
-        }
+        Spacer(modifier = Modifier.weight(bottomSpacerWeight))
     }
 }

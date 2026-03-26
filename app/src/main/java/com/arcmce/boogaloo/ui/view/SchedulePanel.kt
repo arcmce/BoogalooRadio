@@ -133,7 +133,7 @@ fun SchedulePanel(
                             selected = pagerState.currentPage == i,
                             onClick = { coroutineScope.launch { pagerState.animateScrollToPage(i) } }
                         ) {
-                            Text(label, modifier = Modifier.padding(vertical = 12.dp, horizontal = 4.dp))
+                            Text(label, modifier = Modifier.padding(vertical = 12.dp, horizontal = 16.dp))
                         }
                     }
                 }
