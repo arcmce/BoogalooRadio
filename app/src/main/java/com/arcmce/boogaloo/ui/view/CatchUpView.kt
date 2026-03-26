@@ -6,10 +6,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
@@ -29,9 +28,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
 import com.arcmce.boogaloo.ui.viewmodel.SharedViewModel
 import kotlinx.coroutines.launch
 import coil.request.ImageRequest
@@ -121,9 +122,7 @@ fun CardItemView(
     navController: NavController
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight(),
+        modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(4.dp),
         onClick = {
             if (BuildConfig.DEBUG) Log.d("CatchUpView", "card tapped: navigating to pastShow/${item.slug}")
@@ -140,15 +139,18 @@ fun CardItemView(
                     .build(),
 //                item.thumbnail,
                 contentDescription = item.name,
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(150.dp),
+                    .aspectRatio(1f),
                 placeholder = painterResource(R.drawable.boogaloo_b),
                 error = painterResource(R.drawable.boogaloo_b),
             )
             Text(
                 text = item.name,
                 style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(8.dp)
             )
         }

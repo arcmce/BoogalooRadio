@@ -8,11 +8,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
@@ -100,7 +101,6 @@ fun CloudcastCardItemView(item: CloudcastCardItem, isResumed: Boolean) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .wrapContentHeight()
             .then(if (isResumed) Modifier.clickable {
                 if (BuildConfig.DEBUG) Log.d("CloudcastView", "onItemClicked " + item.name)
                 if (BuildConfig.DEBUG) Log.d("CloudcastView", "onItemClicked " + item.url)
@@ -115,14 +115,18 @@ fun CloudcastCardItemView(item: CloudcastCardItem, isResumed: Boolean) {
             AsyncImage(
                 model = item.thumbnail,
                 contentDescription = item.name,
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(150.dp)
+                    .aspectRatio(1f)
             )
             Text(
                 text = item.name,
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(8.dp)
+                maxLines = 1,
+                modifier = Modifier
+                    .padding(8.dp)
+                    .basicMarquee()
             )
         }
     }
