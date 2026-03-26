@@ -14,6 +14,7 @@ import coil.ImageLoader
 import coil.request.ImageRequest
 import coil.request.SuccessResult
 import kotlinx.coroutines.Dispatchers
+import com.arcmce.boogaloo.network.model.ScheduleItem
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -56,6 +57,13 @@ class SharedViewModel(private val application: Application) : AndroidViewModel(a
 
     fun setLiveTitle(data: String?) {
         _liveTitle.value = data
+    }
+
+    private val _currentScheduleItem = MutableStateFlow<ScheduleItem?>(null)
+    val currentScheduleItem: StateFlow<ScheduleItem?> = _currentScheduleItem
+
+    fun setCurrentScheduleItem(item: ScheduleItem?) {
+        _currentScheduleItem.value = item
     }
 
     private val _artworkUrl = MutableStateFlow<String?>(null)

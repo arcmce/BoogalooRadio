@@ -155,9 +155,12 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
         )
 
         val textColor = Color(artworkColorSwatch?.bodyTextColor ?: Color.White.toArgb())
-        val titleParts = title?.split(" - ", limit = 2)
-        val showName = titleParts?.getOrNull(0) ?: "Boogaloo Radio"
-        val hostName = titleParts?.getOrNull(1)
+        val currentScheduleItem by sharedViewModel.currentScheduleItem.collectAsState()
+        val showName = currentScheduleItem?.playlist?.artist
+            ?: title?.split(" - ", limit = 2)?.getOrNull(0)
+            ?: "Boogaloo Radio"
+        val hostName = currentScheduleItem?.playlist?.name
+            ?: title?.split(" - ", limit = 2)?.getOrNull(1)
 
         androidx.compose.foundation.layout.Column(
             modifier = Modifier

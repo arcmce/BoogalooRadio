@@ -49,6 +49,9 @@ class LiveViewModel(private val repository: Repository, private val application:
     private val _scheduleError = MutableStateFlow<String?>(null)
     val scheduleError: StateFlow<String?> = _scheduleError
 
+    private val _currentScheduleItem = MutableStateFlow<ScheduleItem?>(null)
+    val currentScheduleItem: StateFlow<ScheduleItem?> = _currentScheduleItem
+
     init {
         setupPlayer()
         startPolling()
@@ -58,8 +61,32 @@ class LiveViewModel(private val repository: Repository, private val application:
         viewModelScope.launch {
             while (true) {
                 fetchRadioInfo()
+                updateCurrentScheduleItem()
+                refreshMetadata()
                 delay(10_000)
             }
+        }
+    }
+
+    private fun refreshMetadata() {
+        val artworkUri = _artworkUrl.value?.let { Uri.parse(it) } ?: Uri.EMPTY
+        val scheduleItem = _currentScheduleItem.value
+        val artist = scheduleItem?.playlist?.artist ?: _title.value ?: AppConstants.DEFAULT_ARTIST
+        val title = scheduleItem?.playlist?.name ?: AppConstants.RADIO_TITLE
+        updateMetadata(artist, title, artworkUri)
+    }
+
+    private fun updateCurrentScheduleItem() {
+        val items = _scheduleItems.value
+        if (items.isEmpty()) return
+        val fmt = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", java.util.Locale.US)
+        val now = java.util.Date()
+        _currentScheduleItem.value = items.firstOrNull { item ->
+            runCatching {
+                val start = fmt.parse(item.start)!!
+                val end = fmt.parse(item.end)!!
+                now.after(start) && now.before(end)
+            }.getOrDefault(false)
         }
     }
 
@@ -80,19 +107,17 @@ class LiveViewModel(private val repository: Repository, private val application:
         }
     }
 
-    fun updateMetadata(metadataArtist: String, artworkUri: Uri) {
+    private fun updateMetadata(metadataArtist: String, metadataTitle: String, artworkUri: Uri) {
         val mediaItem = MediaItem.Builder()
             .setUri(AppConstants.RADIO_STREAM_URL)
             .setMediaMetadata(
                 MediaMetadata.Builder()
-                    .setTitle(AppConstants.RADIO_TITLE)
+                    .setTitle(metadataTitle)
                     .setArtist(metadataArtist)
                     .setArtworkUri(artworkUri)
                     .build()
             )
             .build()
-
-        // Update the player with the new media item
         player?.replaceMediaItem(0, mediaItem)
     }
 
@@ -105,11 +130,6 @@ class LiveViewModel(private val repository: Repository, private val application:
 
                 val newArtworkUrl = response.body()?.currentTrack?.artworkUrlLarge
                 _artworkUrl.value = newArtworkUrl
-
-                val metadataArtist = _title.value ?: AppConstants.DEFAULT_ARTIST
-                val artworkUri = _artworkUrl.value?.let { Uri.parse(it) } ?: Uri.EMPTY
-
-                updateMetadata(metadataArtist, artworkUri)
             } else {
                 _artworkUrl.value = null
                 _error.value = "Failed to load track info (${response.code()})"
@@ -130,6 +150,8 @@ class LiveViewModel(private val repository: Repository, private val application:
                 val response = repository.getSchedule()
                 if (response.isSuccessful) {
                     _scheduleItems.value = response.body()?.data ?: emptyList()
+                    updateCurrentScheduleItem()
+                    refreshMetadata()
                 } else {
                     _scheduleError.value = "Failed to load schedule (${response.code()})"
                 }
