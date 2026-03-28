@@ -80,6 +80,7 @@ fun SchedulePanel(
     val allItems by viewModel.scheduleItems.collectAsState()
     val isLoading by viewModel.scheduleLoading.collectAsState()
     val error by viewModel.scheduleError.collectAsState()
+    val currentScheduleItem by viewModel.currentScheduleItem.collectAsState()
 
     LaunchedEffect(Unit) { viewModel.fetchSchedule() }
 
@@ -154,7 +155,7 @@ fun SchedulePanel(
                 ) { page ->
                     val dayItems = days.getOrNull(page)?.third ?: emptyList()
                     val isCurrentDay = days.getOrNull(page)?.first == todayKey
-                    val currentShowIndex = remember(dayItems) { findCurrentShowIndex(dayItems) }
+                    val currentShowIndex = remember(dayItems, currentScheduleItem) { findCurrentShowIndex(dayItems) }
                     val listState = rememberLazyListState()
 
                     LaunchedEffect(currentShowIndex, visible) {
