@@ -44,6 +44,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,6 +60,8 @@ import coil.request.SuccessResult
 import com.arcmce.boogaloo.network.model.ScheduleItem
 import com.arcmce.boogaloo.ui.viewmodel.LiveViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
@@ -71,7 +74,8 @@ import java.util.TimeZone
 fun SchedulePanel(
     viewModel: LiveViewModel,
     isDarkTheme: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    visible: Boolean = true
 ) {
     val allItems by viewModel.scheduleItems.collectAsState()
     val isLoading by viewModel.scheduleLoading.collectAsState()
@@ -110,6 +114,12 @@ fun SchedulePanel(
     val pagerState = rememberPagerState(initialPage = todayIndex) { days.size }
     val coroutineScope = rememberCoroutineScope()
 
+    LaunchedEffect(visible, todayIndex) {
+        if (visible && days.isNotEmpty()) {
+            pagerState.scrollToPage(todayIndex)
+        }
+    }
+
     Column(modifier) {
         when {
             isLoading -> Box(
@@ -147,9 +157,12 @@ fun SchedulePanel(
                     val currentShowIndex = remember(dayItems) { findCurrentShowIndex(dayItems) }
                     val listState = rememberLazyListState()
 
-                    LaunchedEffect(currentShowIndex) {
-                        if (isCurrentDay && currentShowIndex >= 0) {
-                            listState.animateScrollToItem(currentShowIndex)
+                    LaunchedEffect(currentShowIndex, visible) {
+                        if (visible && isCurrentDay && currentShowIndex >= 0) {
+                            snapshotFlow { listState.layoutInfo.visibleItemsInfo }
+                                .filter { it.isNotEmpty() }
+                                .first()
+                            listState.scrollToItem(currentShowIndex)
                         }
                     }
 

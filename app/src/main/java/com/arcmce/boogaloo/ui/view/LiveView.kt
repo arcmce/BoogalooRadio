@@ -156,7 +156,7 @@ fun LiveView(
                     translationY = size.height * panelSlide
                 }
         ) {
-            SchedulePanel(viewModel = viewModel, isDarkTheme = isDarkTheme, modifier = Modifier.fillMaxSize())
+            SchedulePanel(viewModel = viewModel, isDarkTheme = isDarkTheme, modifier = Modifier.fillMaxSize(), visible = scheduleOpen)
         }
 
         Spacer(modifier = Modifier.weight(bottomSpacerWeight))
