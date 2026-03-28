@@ -16,6 +16,9 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -43,13 +46,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -62,6 +62,8 @@ import com.arcmce.boogaloo.R
 import com.arcmce.boogaloo.playback.PlaybackService
 import com.arcmce.boogaloo.ui.viewmodel.SharedViewModel
 import com.google.common.util.concurrent.MoreExecutors
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @Composable
 fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifier: Modifier = Modifier) {
@@ -76,12 +78,29 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
     )
 
     val isPlaying by sharedViewModel.isPlaying.collectAsState()
-
     val title by sharedViewModel.liveTitle.observeAsState()
-
     val artworkColorSwatch by sharedViewModel.artworkColorSwatch.collectAsState()
-
     val artworkUrl by sharedViewModel.artworkUrl.collectAsState()
+    val currentScheduleItem by sharedViewModel.currentScheduleItem.collectAsState()
+
+    val textColor = Color(artworkColorSwatch?.bodyTextColor ?: Color.White.toArgb())
+
+    val progress = remember(currentScheduleItem) {
+        currentScheduleItem?.let { item ->
+            val fmt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US)
+            runCatching {
+                val start = fmt.parse(item.start)!!.time
+                val end = fmt.parse(item.end)!!.time
+                val now = System.currentTimeMillis()
+                ((now - start).toFloat() / (end - start).toFloat()).coerceIn(0f, 1f)
+            }.getOrDefault(0f)
+        } ?: 0f
+    }
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress,
+        animationSpec = tween(1000),
+        label = "showProgress"
+    )
 
     DisposableEffect(Unit) {
         val sessionToken = SessionToken(context, ComponentName(context, PlaybackService::class.java))
@@ -112,12 +131,10 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
         onDispose {
             player?.release()
             player = null
-
         }
     }
 
-    // Top-level layout as a Row
-    Row(
+    Box(
         modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
@@ -133,84 +150,96 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
                     isPressed = false
                 }
             }
-            .background(
-                color = Color(artworkColorSwatch?.rgb ?: Color.Gray.toArgb()),
-                shape = RoundedCornerShape(10.dp)
-            ),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+            .clip(RoundedCornerShape(10.dp))
+            .background(color = Color(artworkColorSwatch?.rgb ?: Color.Gray.toArgb()))
     ) {
-        ArtworkImage(
-            url = artworkUrl,
+        Row(
             modifier = Modifier
-                .aspectRatio(1f)
-                .clip(
-                    RoundedCornerShape(
-                        topStart = 10.dp,
-                        bottomStart = 10.dp,
-                        topEnd = 0.dp,
-                        bottomEnd = 0.dp
-                    )
-                )
-        )
-
-        val textColor = Color(artworkColorSwatch?.bodyTextColor ?: Color.White.toArgb())
-        val currentScheduleItem by sharedViewModel.currentScheduleItem.collectAsState()
-        val showName = currentScheduleItem?.playlist?.artist
-            ?: title?.split(" - ", limit = 2)?.getOrNull(0)
-            ?: "Boogaloo Radio"
-        val hostName = currentScheduleItem?.playlist?.name
-            ?: title?.split(" - ", limit = 2)?.getOrNull(1)
-
-        androidx.compose.foundation.layout.Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.Center
+                .fillMaxWidth()
+                .heightIn(min = 24.dp, max = 48.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                text = showName,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                color = textColor,
-                maxLines = 1,
-                modifier = Modifier.basicMarquee()
+            ArtworkImage(
+                url = artworkUrl,
+                modifier = Modifier
+                    .aspectRatio(1f)
+                    .clip(
+                        RoundedCornerShape(
+                            topStart = 10.dp,
+                            bottomStart = 10.dp,
+                            topEnd = 0.dp,
+                            bottomEnd = 0.dp
+                        )
+                    )
             )
-            if (hostName != null) {
+
+            val showName = currentScheduleItem?.playlist?.artist
+                ?: title?.split(" - ", limit = 2)?.getOrNull(0)
+                ?: "Boogaloo Radio"
+            val hostName = currentScheduleItem?.playlist?.name
+                ?: title?.split(" - ", limit = 2)?.getOrNull(1)
+
+            androidx.compose.foundation.layout.Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.Center
+            ) {
                 Text(
-                    text = hostName,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = textColor.copy(alpha = 0.75f),
+                    text = showName,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = textColor,
                     maxLines = 1,
                     modifier = Modifier.basicMarquee()
                 )
+                if (hostName != null) {
+                    Text(
+                        text = hostName,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = textColor.copy(alpha = 0.75f),
+                        maxLines = 1,
+                        modifier = Modifier.basicMarquee()
+                    )
+                }
+            }
+
+            AnimatedVisibility(visible = isPlaying) {
+                EqualizerBars(
+                    color = Color(artworkColorSwatch?.bodyTextColor ?: Color.White.toArgb()),
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+            }
+
+            IconButton(onClick = {
+                if (isPlaying) {
+                    player?.pause()
+                    if (BuildConfig.DEBUG) Log.d("PlaybackControls", "Pausing playback")
+                } else {
+                    player?.seekToDefaultPosition()
+                    player?.play()
+                    if (BuildConfig.DEBUG) Log.d("PlaybackControls", "Starting playback")
+                }
+            }) {
+                val iconRes = if (isPlaying) R.drawable.ic_media_pause else R.drawable.ic_media_play
+                val contentDescription = if (isPlaying) "Pause button" else "Play button"
+
+                Icon(
+                    painter = painterResource(id = iconRes),
+                    contentDescription = contentDescription,
+                    tint = Color(artworkColorSwatch?.bodyTextColor ?: Color.White.toArgb())
+                )
             }
         }
 
-        AnimatedVisibility(visible = isPlaying) {
-            EqualizerBars(
-                color = Color(artworkColorSwatch?.bodyTextColor ?: Color.White.toArgb()),
-                modifier = Modifier.padding(end = 8.dp)
-            )
-        }
-
-        IconButton(onClick = {
-            if (isPlaying) {
-                player?.pause()
-                if (BuildConfig.DEBUG) Log.d("PlaybackControls", "Pausing playback")
-            } else {
-                player?.seekToDefaultPosition()
-                player?.play()
-                if (BuildConfig.DEBUG) Log.d("PlaybackControls", "Starting playback")
-            }
-        }) {
-            val iconRes = if (isPlaying) R.drawable.ic_media_pause else R.drawable.ic_media_play
-            val contentDescription = if (isPlaying) "Pause button" else "Play button"
-
-            Icon(
-                painter = painterResource(id = iconRes),
-                contentDescription = contentDescription,
-                tint = Color(artworkColorSwatch?.bodyTextColor ?: Color.White.toArgb())
+        if (currentScheduleItem != null) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .fillMaxWidth(animatedProgress)
+                    .height(3.dp)
+                    .background(textColor.copy(alpha = 0.4f))
             )
         }
     }
