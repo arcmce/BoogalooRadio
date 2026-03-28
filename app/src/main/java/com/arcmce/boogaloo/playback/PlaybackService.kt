@@ -69,13 +69,12 @@ class PlaybackService : MediaSessionService() {
 
 
     override fun onTaskRemoved(rootIntent: Intent?) {
-        mediaSession?.player?.let { player ->
-            if (player.playWhenReady) {
-                // Pause the player if it's playing
-                player.pause()
-            }
+        val player = mediaSession?.player
+        if (player == null || !player.playWhenReady) {
+            stopSelf()
         }
-        stopSelf()
+        // If playing, keep the foreground service alive so audio continues
+        // and the user can stop it from the notification.
     }
 
     override fun onDestroy() {
