@@ -23,6 +23,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -54,6 +55,16 @@ fun LiveView(
     sharedViewModel.setCurrentScheduleItem(currentScheduleItem)
 
     val paperRes = if (isDarkTheme) R.drawable.paper_dark else R.drawable.paper_light
+
+    var visibleError by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(error) {
+        if (error != null) {
+            delay(10_000)
+            visibleError = error
+        } else {
+            visibleError = null
+        }
+    }
 
     var scheduleOpen by remember { mutableStateOf(false) }
 
@@ -128,7 +139,7 @@ fun LiveView(
             )
         }
 
-        error?.let {
+        visibleError?.let {
             Text(
                 text = it,
                 color = MaterialTheme.colorScheme.error,

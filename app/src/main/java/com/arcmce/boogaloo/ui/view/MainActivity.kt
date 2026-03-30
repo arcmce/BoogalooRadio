@@ -1,13 +1,21 @@
 package com.arcmce.boogaloo.ui.view
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import androidx.annotation.DrawableRes
 import com.arcmce.boogaloo.BuildConfig
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.runtime.collectAsState
 import androidx.compose.animation.core.tween
@@ -25,19 +33,23 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -147,6 +159,8 @@ fun AppContent(
         sharedViewModel.setIsDarkTheme(isDarkTheme)
     }
 
+    var showSocialsSheet by rememberSaveable { mutableStateOf(false) }
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -163,6 +177,11 @@ fun AppContent(
                                 .height(32.dp),
                             contentScale = ContentScale.Fit
                         )
+                    },
+                    actions = {
+                        IconButton(onClick = { showSocialsSheet = true }) {
+                            Icon(Icons.Outlined.Info, contentDescription = "About")
+                        }
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                         containerColor = Color.Transparent
@@ -223,6 +242,15 @@ fun AppContent(
                         .align(Alignment.BottomCenter)
                         .clickable {  }
                 )
+            }
+        }
+
+        if (showSocialsSheet) {
+            ModalBottomSheet(
+                onDismissRequest = { showSocialsSheet = false },
+                sheetState = rememberModalBottomSheetState()
+            ) {
+                SocialsSheetContent(context)
             }
         }
     }
@@ -323,6 +351,45 @@ fun TabBarBadgeView(count: Int? = null) {
 
 
 
+
+@Composable
+fun SocialsSheetContent(context: Context) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp)
+            .padding(bottom = 32.dp)
+    ) {
+        Text(
+            "Follow us",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        SocialLink(context, R.drawable.ic_instagram, "Instagram", "https://instagram.com/boogalooradio")
+        SocialLink(context, R.drawable.ic_facebook, "Facebook", "https://facebook.com/boogalooradio")
+        SocialLink(context, R.drawable.ic_x, "X", "https://x.com/boogaloo_radio")
+        SocialLink(context, R.drawable.ic_web, "Website", "https://boogalooradio.com")
+    }
+}
+
+@Composable
+fun SocialLink(context: Context, @DrawableRes iconRes: Int, label: String, url: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
+            .padding(vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            painter = painterResource(iconRes),
+            contentDescription = label,
+            modifier = Modifier.size(22.dp)
+        )
+        Spacer(Modifier.width(16.dp))
+        Text(label, style = MaterialTheme.typography.bodyLarge)
+    }
+}
 
 //@Preview(showBackground = true)
 //@Composable
