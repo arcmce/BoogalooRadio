@@ -4,17 +4,20 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.ui.draw.clip
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -38,7 +41,8 @@ import com.arcmce.boogaloo.ui.viewmodel.SharedViewModel
 @Composable
 fun LiveView(
     viewModel: LiveViewModel,
-    sharedViewModel: SharedViewModel
+    sharedViewModel: SharedViewModel,
+    onNavigateToCatchUp: () -> Unit
 ) {
 
     val artworkUrl by viewModel.artworkUrl.collectAsState()
@@ -148,14 +152,23 @@ fun LiveView(
             )
         }
 
-        OutlinedButton(
-            onClick = {
-                scheduleOpen = !scheduleOpen
-                sharedViewModel.setScheduleOpen(scheduleOpen)
-            },
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.padding(top = 12.dp)
         ) {
-            Text(if (scheduleOpen) "Close" else "Schedule")
+            PaperButton(
+                text = if (scheduleOpen) "Close" else "Schedule",
+                paperRes = paperRes,
+                onClick = {
+                    scheduleOpen = !scheduleOpen
+                    sharedViewModel.setScheduleOpen(scheduleOpen)
+                }
+            )
+            PaperButton(
+                text = "Catch Up",
+                paperRes = paperRes,
+                onClick = onNavigateToCatchUp
+            )
         }
 
         Box(
@@ -171,5 +184,28 @@ fun LiveView(
         }
 
         Spacer(modifier = Modifier.weight(bottomSpacerWeight))
+    }
+}
+
+@Composable
+private fun PaperButton(text: String, paperRes: Int, onClick: () -> Unit) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .shadow(2.dp, RoundedCornerShape(50))
+            .clip(RoundedCornerShape(50))
+            .clickable(onClick = onClick)
+    ) {
+        Image(
+            painter = painterResource(paperRes),
+            contentDescription = null,
+            modifier = Modifier.matchParentSize(),
+            contentScale = ContentScale.Crop
+        )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
+        )
     }
 }

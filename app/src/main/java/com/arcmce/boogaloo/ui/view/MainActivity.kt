@@ -30,21 +30,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -62,7 +55,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
@@ -70,7 +62,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -88,12 +79,6 @@ import com.arcmce.boogaloo.ui.viewmodel.SharedViewModel
 import com.arcmce.boogaloo.ui.viewmodel.SharedViewModelFactory
 
 
-data class TabBarItem(
-    val title: String,
-    val selectedIcon: ImageVector,
-    val unselectedIcon: ImageVector,
-    val badgeAmount: Int? = null
-)
 
 class MainActivity : ComponentActivity() {
 
@@ -146,12 +131,6 @@ fun AppContent(
 ) {
     val isDarkTheme = isSystemInDarkTheme()
 
-    val liveTab = TabBarItem(title = "Live", selectedIcon = Icons.Filled.Home, unselectedIcon = Icons.Outlined.Home)
-    val catchUpTab = TabBarItem(title = "CatchUp", selectedIcon = Icons.Filled.Notifications, unselectedIcon = Icons.Outlined.Notifications)
-
-    // creating a list of all the tabs
-    val tabBarItems = listOf(liveTab, catchUpTab)
-
     val navController = rememberNavController()
 
     LaunchedEffect(isDarkTheme) {
@@ -161,6 +140,8 @@ fun AppContent(
 
     var showSocialsSheet by rememberSaveable { mutableStateOf(false) }
 
+    val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -169,6 +150,13 @@ fun AppContent(
             topBar = {
                 CenterAlignedTopAppBar(
                     windowInsets = TopAppBarDefaults.windowInsets,
+                    navigationIcon = {
+                        if (currentRoute != "Live") {
+                            IconButton(onClick = { navController.popBackStack() }) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                            }
+                        }
+                    },
                     title = {
                         Image(
                             painter = painterResource(if (isDarkTheme) R.drawable.logo_long_white else R.drawable.logo_long_black),
@@ -188,9 +176,6 @@ fun AppContent(
                     )
                 )
             },
-            bottomBar = {
-                TabView(tabBarItems, navController, sharedViewModel)
-            }
         ) { innerPadding ->
             Box(
                 modifier = Modifier
@@ -200,11 +185,11 @@ fun AppContent(
                 // Navigation host to switch between LiveView and CatchUpView
                 NavHost(
                     navController = navController,
-                    startDestination = liveTab.title,
+                    startDestination = "Live",
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    composable(liveTab.title) { LiveView(liveViewModel, sharedViewModel )}
-                    composable(catchUpTab.title) { CatchUpView(catchUpViewModel, navController, sharedViewModel) }
+                    composable("Live") { LiveView(liveViewModel, sharedViewModel, onNavigateToCatchUp = { navController.navigate("CatchUp") }) }
+                    composable("CatchUp") { CatchUpView(catchUpViewModel, navController, sharedViewModel) }
 
                     composable("pastShow/{slug}") { backStackEntry ->
                         val slug = backStackEntry.arguments?.getString("slug") ?: return@composable
@@ -213,10 +198,9 @@ fun AppContent(
                     }
                 }
 
-                val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
                 val isScheduleOpen by sharedViewModel.isScheduleOpen.collectAsState()
                 AnimatedVisibility(
-                    visible = currentRoute != liveTab.title || isScheduleOpen,
+                    visible = currentRoute != "Live" || isScheduleOpen,
                     enter = fadeIn(animationSpec = tween(800)),
                     exit = fadeOut(animationSpec = tween(800)),
                     modifier = Modifier.align(Alignment.BottomCenter)
@@ -256,95 +240,6 @@ fun AppContent(
     }
 }
 
-// ----------------------------------------
-// This is a wrapper view that allows us to easily and cleanly
-// reuse this component in any future project
-@Composable
-fun TabView(tabBarItems: List<TabBarItem>, navController: NavController, sharedViewModel: SharedViewModel) {
-    var selectedTabIndex by rememberSaveable {
-        mutableStateOf(0)
-    }
-
-    // Observe the current back stack entry
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-
-    // Update selectedTabIndex based on the current destination
-    LaunchedEffect(navBackStackEntry) {
-        val currentDestination = navBackStackEntry?.destination?.route
-        tabBarItems.forEachIndexed { index, tabBarItem ->
-            if (tabBarItem.title == currentDestination) {
-                selectedTabIndex = index
-            }
-        }
-    }
-
-
-    NavigationBar {
-        // looping over each tab to generate the views and navigation for each item
-        tabBarItems.forEachIndexed { index, tabBarItem ->
-            NavigationBarItem(
-                selected = selectedTabIndex == index,
-                onClick = {
-                    if (index == selectedTabIndex) {
-                        val popped = navController.popBackStack(tabBarItem.title, inclusive = false)
-                        if (!popped && tabBarItem.title == "CatchUp") {
-                            sharedViewModel.triggerCatchUpScrollToTop()
-                        }
-                    } else {
-                        selectedTabIndex = index
-                        navController.navigate(tabBarItem.title) {
-                            popUpTo(navController.graph.startDestinationId) {
-                                saveState = true
-                            }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
-                },
-                icon = {
-                    TabBarIconView(
-                        isSelected = selectedTabIndex == index,
-                        selectedIcon = tabBarItem.selectedIcon,
-                        unselectedIcon = tabBarItem.unselectedIcon,
-                        title = tabBarItem.title,
-                        badgeAmount = tabBarItem.badgeAmount
-                    )
-                },
-                label = {Text(tabBarItem.title)})
-        }
-    }
-}
-
-// This component helps to clean up the API call from our TabView above,
-// but could just as easily be added inside the TabView without creating this custom component
-@Composable
-fun TabBarIconView(
-    isSelected: Boolean,
-    selectedIcon: ImageVector,
-    unselectedIcon: ImageVector,
-    title: String,
-    badgeAmount: Int? = null
-) {
-    BadgedBox(badge = { TabBarBadgeView(badgeAmount) }) {
-        Icon(
-            imageVector = if (isSelected) {selectedIcon} else {unselectedIcon},
-            contentDescription = title
-        )
-    }
-}
-
-// This component helps to clean up the API call from our TabBarIconView above,
-// but could just as easily be added inside the TabBarIconView without creating this custom component
-@Composable
-fun TabBarBadgeView(count: Int? = null) {
-    if (count != null) {
-        Badge {
-            Text(count.toString())
-        }
-    }
-}
-// end of the reusable components that can be copied over to any new projects
-// ----------------------------------------
 
 
 
