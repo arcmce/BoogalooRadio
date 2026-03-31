@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
@@ -26,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -35,11 +37,15 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import coil.compose.AsyncImage
 import com.arcmce.boogaloo.ui.viewmodel.CloudcastCardItem
 import com.arcmce.boogaloo.ui.viewmodel.CloudcastViewModel
+import com.arcmce.boogaloo.ui.viewmodel.SharedViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun CloudcastView(
     viewModel: CloudcastViewModel,
-    slug: String
+    slug: String,
+    sharedViewModel: SharedViewModel,
+    onNavigateBack: () -> Unit
 ) {
     if (BuildConfig.DEBUG) Log.d("CloudcastView", "CloudcastView composed: slug=$slug, instance=${System.identityHashCode(viewModel)}")
 
@@ -52,6 +58,21 @@ fun CloudcastView(
     val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
     val isResumed = lifecycleState.isAtLeast(Lifecycle.State.RESUMED)
 
+    val gridState = rememberLazyGridState()
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        sharedViewModel.mixesTabTapped.collect {
+            if (lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+                if (gridState.firstVisibleItemIndex == 0 && gridState.firstVisibleItemScrollOffset == 0) {
+                    onNavigateBack()
+                } else {
+                    coroutineScope.launch { gridState.animateScrollToItem(0) }
+                }
+            }
+        }
+    }
+
     val readyForSlug by viewModel.readyForSlug.collectAsState()
 
     if (BuildConfig.DEBUG) Log.d("CloudcastView", "readyForSlug=$readyForSlug slug=$slug lifecycleState=$lifecycleState showing=${readyForSlug == slug}")
@@ -63,7 +84,7 @@ fun CloudcastView(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            CloudcastVerticalGrid(viewModel, isResumed)
+            CloudcastVerticalGrid(viewModel, isResumed, gridState)
         }
     }
 }
@@ -71,10 +92,9 @@ fun CloudcastView(
 @Composable
 fun CloudcastVerticalGrid(
     viewModel: CloudcastViewModel,
-    isResumed: Boolean
+    isResumed: Boolean,
+    gridState: LazyGridState
 ) {
-    val gridState = rememberLazyGridState()
-
     val cardItems by viewModel.cloudcastCardDataset.collectAsState(initial = emptyList())
 
     LazyVerticalGrid(

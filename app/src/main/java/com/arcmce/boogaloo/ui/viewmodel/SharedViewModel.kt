@@ -30,6 +30,13 @@ class SharedViewModel(private val application: Application) : AndroidViewModel(a
         _catchUpScrollToTop.tryEmit(Unit)
     }
 
+    private val _mixesTabTapped = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val mixesTabTapped: SharedFlow<Unit> = _mixesTabTapped
+
+    fun triggerMixesTabTapped() {
+        _mixesTabTapped.tryEmit(Unit)
+    }
+
     private val _isDarkTheme = MutableStateFlow(false)
     val isDarkTheme: StateFlow<Boolean> = _isDarkTheme
 

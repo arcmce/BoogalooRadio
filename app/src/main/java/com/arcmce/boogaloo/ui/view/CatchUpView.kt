@@ -27,6 +27,8 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -52,10 +54,21 @@ fun CatchUpView(
 
     val gridState = rememberLazyGridState()
     val coroutineScope = rememberCoroutineScope()
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     LaunchedEffect(Unit) {
         sharedViewModel.catchUpScrollToTop.collect {
             coroutineScope.launch { gridState.animateScrollToItem(0) }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        sharedViewModel.mixesTabTapped.collect {
+            if (lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+                if (gridState.firstVisibleItemIndex != 0 || gridState.firstVisibleItemScrollOffset != 0) {
+                    coroutineScope.launch { gridState.animateScrollToItem(0) }
+                }
+            }
         }
     }
 

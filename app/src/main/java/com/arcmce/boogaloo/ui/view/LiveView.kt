@@ -8,7 +8,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,7 +41,6 @@ import com.arcmce.boogaloo.ui.viewmodel.SharedViewModel
 fun LiveView(
     viewModel: LiveViewModel,
     sharedViewModel: SharedViewModel,
-    onNavigateToCatchUp: () -> Unit
 ) {
 
     val artworkUrl by viewModel.artworkUrl.collectAsState()
@@ -152,24 +150,15 @@ fun LiveView(
             )
         }
 
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        PaperButton(
+            text = if (scheduleOpen) "Close" else "Schedule",
+            paperRes = paperRes,
+            onClick = {
+                scheduleOpen = !scheduleOpen
+                sharedViewModel.setScheduleOpen(scheduleOpen)
+            },
             modifier = Modifier.padding(top = 12.dp)
-        ) {
-            PaperButton(
-                text = if (scheduleOpen) "Close" else "Schedule",
-                paperRes = paperRes,
-                onClick = {
-                    scheduleOpen = !scheduleOpen
-                    sharedViewModel.setScheduleOpen(scheduleOpen)
-                }
-            )
-            PaperButton(
-                text = "Catch Up",
-                paperRes = paperRes,
-                onClick = onNavigateToCatchUp
-            )
-        }
+        )
 
         Box(
             modifier = Modifier
@@ -188,10 +177,10 @@ fun LiveView(
 }
 
 @Composable
-private fun PaperButton(text: String, paperRes: Int, onClick: () -> Unit) {
+private fun PaperButton(text: String, paperRes: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier
+        modifier = modifier
             .shadow(2.dp, RoundedCornerShape(50))
             .clip(RoundedCornerShape(50))
             .clickable(onClick = onClick)

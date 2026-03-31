@@ -31,13 +31,21 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.LibraryMusic
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.LibraryMusic
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -142,6 +150,13 @@ fun AppContent(
 
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
 
+    val selectedTab = when {
+        currentRoute?.startsWith("pastShow") == true -> "CatchUp"
+        currentRoute == "Favorites" -> "Favorites"
+        currentRoute == "CatchUp" -> "CatchUp"
+        else -> "Live"
+    }
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -151,7 +166,7 @@ fun AppContent(
                 CenterAlignedTopAppBar(
                     windowInsets = TopAppBarDefaults.windowInsets,
                     navigationIcon = {
-                        if (currentRoute != "Live") {
+                        if (currentRoute?.startsWith("pastShow") == true) {
                             IconButton(onClick = { navController.popBackStack() }) {
                                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                             }
@@ -176,6 +191,64 @@ fun AppContent(
                     )
                 )
             },
+            bottomBar = {
+                NavigationBar {
+                    NavigationBarItem(
+                        selected = selectedTab == "Live",
+                        onClick = {
+                            navController.navigate("Live") {
+                                popUpTo("Live") { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        },
+                        icon = {
+                            Icon(
+                                if (selectedTab == "Live") Icons.Filled.Home else Icons.Outlined.Home,
+                                contentDescription = "Home"
+                            )
+                        },
+                        label = { Text("Home") }
+                    )
+                    NavigationBarItem(
+                        selected = selectedTab == "Favorites",
+                        onClick = {
+                            navController.navigate("Favorites") {
+                                popUpTo("Live") { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        icon = {
+                            Icon(
+                                if (selectedTab == "Favorites") Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                                contentDescription = "Favorites"
+                            )
+                        },
+                        label = { Text("Favorites") }
+                    )
+                    NavigationBarItem(
+                        selected = selectedTab == "CatchUp",
+                        onClick = {
+                            if (selectedTab == "CatchUp") {
+                                sharedViewModel.triggerMixesTabTapped()
+                            } else {
+                                navController.navigate("CatchUp") {
+                                    popUpTo("Live") { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+                        },
+                        icon = {
+                            Icon(
+                                if (selectedTab == "CatchUp") Icons.Filled.LibraryMusic else Icons.Outlined.LibraryMusic,
+                                contentDescription = "Mixes"
+                            )
+                        },
+                        label = { Text("Mixes") }
+                    )
+                }
+            },
         ) { innerPadding ->
             Box(
                 modifier = Modifier
@@ -188,13 +261,14 @@ fun AppContent(
                     startDestination = "Live",
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    composable("Live") { LiveView(liveViewModel, sharedViewModel, onNavigateToCatchUp = { navController.navigate("CatchUp") }) }
+                    composable("Live") { LiveView(liveViewModel, sharedViewModel) }
+                    composable("Favorites") { FavoritesView() }
                     composable("CatchUp") { CatchUpView(catchUpViewModel, navController, sharedViewModel) }
 
                     composable("pastShow/{slug}") { backStackEntry ->
                         val slug = backStackEntry.arguments?.getString("slug") ?: return@composable
                         val cloudcastViewModel: CloudcastViewModel = viewModel(backStackEntry, factory = cloudcastViewModelFactory)
-                        CloudcastView(cloudcastViewModel, slug)
+                        CloudcastView(cloudcastViewModel, slug, sharedViewModel, onNavigateBack = { navController.popBackStack() })
                     }
                 }
 
