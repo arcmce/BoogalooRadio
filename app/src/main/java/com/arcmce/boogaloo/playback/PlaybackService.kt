@@ -60,9 +60,6 @@ class PlaybackService : MediaSessionService() {
         // Set the media item to the player
         player.setMediaItem(mediaItem)
 
-        // Prepare the player to play the media
-        player.prepare()
-
         if (BuildConfig.DEBUG) Log.d("PlaybackService", "MediaSession created")
 
     }

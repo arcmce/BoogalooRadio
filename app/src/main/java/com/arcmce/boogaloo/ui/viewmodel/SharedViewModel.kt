@@ -73,6 +73,13 @@ class SharedViewModel(private val application: Application) : AndroidViewModel(a
         _currentScheduleItem.value = item
     }
 
+    private val _scheduleItems = MutableStateFlow<List<ScheduleItem>>(emptyList())
+    val scheduleItems: StateFlow<List<ScheduleItem>> = _scheduleItems
+
+    fun setScheduleItems(items: List<ScheduleItem>) {
+        _scheduleItems.value = items
+    }
+
     private val _artworkUrl = MutableStateFlow<String?>(null)
     val artworkUrl: StateFlow<String?> = _artworkUrl
 

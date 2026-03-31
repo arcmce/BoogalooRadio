@@ -83,6 +83,9 @@ import com.arcmce.boogaloo.ui.viewmodel.CloudcastViewModel
 import com.arcmce.boogaloo.ui.viewmodel.CloudcastViewModelFactory
 import com.arcmce.boogaloo.ui.viewmodel.LiveViewModel
 import com.arcmce.boogaloo.ui.viewmodel.LiveViewModelFactory
+import com.arcmce.boogaloo.data.repository.FavoritesRepository
+import com.arcmce.boogaloo.ui.viewmodel.FavoritesViewModel
+import com.arcmce.boogaloo.ui.viewmodel.FavoritesViewModelFactory
 import com.arcmce.boogaloo.ui.viewmodel.SharedViewModel
 import com.arcmce.boogaloo.ui.viewmodel.SharedViewModelFactory
 
@@ -101,6 +104,8 @@ class MainActivity : ComponentActivity() {
         val liveViewModel: LiveViewModel by viewModels { LiveViewModelFactory(repository, application) }
         val catchUpViewModel: CatchUpViewModel by viewModels { CatchUpViewModelFactory(repository) }
         val cloudcastViewModelFactory = CloudcastViewModelFactory(repository)
+        val favoritesRepository = FavoritesRepository(application)
+        val favoritesViewModel: FavoritesViewModel by viewModels { FavoritesViewModelFactory(application, favoritesRepository) }
 
         setContent {
             BoogalooJetpackTheme {
@@ -119,6 +124,7 @@ class MainActivity : ComponentActivity() {
                     liveViewModel = liveViewModel,
                     catchUpViewModel = catchUpViewModel,
                     sharedViewModel = sharedViewModel,
+                    favoritesViewModel = favoritesViewModel,
                     cloudcastViewModelFactory = cloudcastViewModelFactory,
                     context = this)
             }
@@ -134,6 +140,7 @@ fun AppContent(
     liveViewModel: LiveViewModel,
     catchUpViewModel: CatchUpViewModel,
     sharedViewModel: SharedViewModel,
+    favoritesViewModel: FavoritesViewModel,
     cloudcastViewModelFactory: CloudcastViewModelFactory,
     context: Context,
 ) {
@@ -261,14 +268,14 @@ fun AppContent(
                     startDestination = "Live",
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    composable("Live") { LiveView(liveViewModel, sharedViewModel) }
-                    composable("Favorites") { FavoritesView() }
-                    composable("CatchUp") { CatchUpView(catchUpViewModel, navController, sharedViewModel) }
+                    composable("Live") { LiveView(liveViewModel, sharedViewModel, favoritesViewModel) }
+                    composable("Favorites") { FavoritesView(favoritesViewModel, sharedViewModel, navController) }
+                    composable("CatchUp") { CatchUpView(catchUpViewModel, navController, sharedViewModel, favoritesViewModel) }
 
                     composable("pastShow/{slug}") { backStackEntry ->
                         val slug = backStackEntry.arguments?.getString("slug") ?: return@composable
                         val cloudcastViewModel: CloudcastViewModel = viewModel(backStackEntry, factory = cloudcastViewModelFactory)
-                        CloudcastView(cloudcastViewModel, slug, sharedViewModel, onNavigateBack = { navController.popBackStack() })
+                        CloudcastView(cloudcastViewModel, slug, sharedViewModel, favoritesViewModel, onNavigateBack = { navController.popBackStack() })
                     }
                 }
 

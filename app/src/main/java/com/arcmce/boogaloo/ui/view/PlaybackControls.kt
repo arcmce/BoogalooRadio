@@ -218,6 +218,7 @@ fun PlaybackControls(context: Context, sharedViewModel: SharedViewModel, modifie
                     if (BuildConfig.DEBUG) Log.d("PlaybackControls", "Pausing playback")
                 } else {
                     player?.seekToDefaultPosition()
+                    player?.prepare()
                     player?.play()
                     if (BuildConfig.DEBUG) Log.d("PlaybackControls", "Starting playback")
                 }

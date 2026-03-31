@@ -34,6 +34,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.arcmce.boogaloo.R
+import com.arcmce.boogaloo.ui.viewmodel.FavoritesViewModel
 import com.arcmce.boogaloo.ui.viewmodel.LiveViewModel
 import com.arcmce.boogaloo.ui.viewmodel.SharedViewModel
 
@@ -41,12 +42,14 @@ import com.arcmce.boogaloo.ui.viewmodel.SharedViewModel
 fun LiveView(
     viewModel: LiveViewModel,
     sharedViewModel: SharedViewModel,
+    favoritesViewModel: FavoritesViewModel,
 ) {
 
     val artworkUrl by viewModel.artworkUrl.collectAsState()
     val title by viewModel.title.observeAsState()
     val error by viewModel.error.collectAsState()
     val currentScheduleItem by viewModel.currentScheduleItem.collectAsState()
+    val scheduleItems by viewModel.scheduleItems.collectAsState()
 
     LaunchedEffect(Unit) { viewModel.fetchSchedule() }
 
@@ -55,6 +58,8 @@ fun LiveView(
     sharedViewModel.setArtworkUrl(artworkUrl)
     sharedViewModel.setLiveTitle(title)
     sharedViewModel.setCurrentScheduleItem(currentScheduleItem)
+
+    LaunchedEffect(scheduleItems) { sharedViewModel.setScheduleItems(scheduleItems) }
 
     val paperRes = if (isDarkTheme) R.drawable.paper_dark else R.drawable.paper_light
 
@@ -169,7 +174,7 @@ fun LiveView(
                     translationY = size.height * panelSlide
                 }
         ) {
-            SchedulePanel(viewModel = viewModel, isDarkTheme = isDarkTheme, modifier = Modifier.fillMaxSize(), visible = scheduleOpen)
+            SchedulePanel(viewModel = viewModel, favoritesViewModel = favoritesViewModel, isDarkTheme = isDarkTheme, modifier = Modifier.fillMaxSize(), visible = scheduleOpen)
         }
 
         Spacer(modifier = Modifier.weight(bottomSpacerWeight))

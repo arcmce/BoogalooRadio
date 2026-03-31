@@ -1,5 +1,3 @@
-to get it to work debug mode for now. comment out build.gradle buildtypes - release section
-
 to build
 up rev in build.gradle (version code and version name)
 android studio - Build - Generate Signed Bundle/ APK - Android App Bundle - Next - Next -  select 'Release' - Build

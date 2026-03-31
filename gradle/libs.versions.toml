@@ -28,6 +28,7 @@ androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3"  }
 materialIconsExtended = { group = "androidx.compose.material", name = "material-icons-extended", version = "1.7.8" }
+datastorePreferences = { group = "androidx.datastore", name = "datastore-preferences", version = "1.1.1" }
 #exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "exoplayer" }
 #session = { group = "androidx.media3", name = "media3-session", version.ref = "exoplayer" }
 #media3UI = { group = "androidx.media3", name = "media3-ui", version.ref = "exoplayer" }

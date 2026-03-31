@@ -57,8 +57,16 @@ import androidx.palette.graphics.Palette
 import coil.ImageLoader
 import coil.request.ImageRequest
 import coil.request.SuccessResult
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.StarBorder
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import com.arcmce.boogaloo.data.model.FavoriteArtist
 import com.arcmce.boogaloo.network.model.ScheduleItem
+import com.arcmce.boogaloo.ui.viewmodel.FavoritesViewModel
 import com.arcmce.boogaloo.ui.viewmodel.LiveViewModel
+import com.arcmce.boogaloo.util.ArtistSlugMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
@@ -73,6 +81,7 @@ import java.util.TimeZone
 @Composable
 fun SchedulePanel(
     viewModel: LiveViewModel,
+    favoritesViewModel: FavoritesViewModel,
     isDarkTheme: Boolean,
     modifier: Modifier = Modifier,
     visible: Boolean = true
@@ -173,7 +182,7 @@ fun SchedulePanel(
                     ) {
                         itemsIndexed(dayItems, key = { _, item -> item.eventId }) { index, item ->
                             val isLive = isCurrentDay && index == currentShowIndex
-                            ScheduleItemRow(item, isLive, isDarkTheme)
+                            ScheduleItemRow(item, isLive, isDarkTheme, favoritesViewModel)
                             HorizontalDivider()
                         }
                     }
@@ -184,8 +193,10 @@ fun SchedulePanel(
 }
 
 @Composable
-private fun ScheduleItemRow(item: ScheduleItem, isLive: Boolean, isDarkTheme: Boolean) {
+private fun ScheduleItemRow(item: ScheduleItem, isLive: Boolean, isDarkTheme: Boolean, favoritesViewModel: FavoritesViewModel) {
     val accentColor = rememberArtworkColor(item.playlist.artwork, isDarkTheme)
+    val favoriteArtistNames by favoritesViewModel.favoriteArtistNames.collectAsState()
+    val isFavorited = item.playlist.artist in favoriteArtistNames
 
     Row(
         modifier = Modifier
@@ -209,7 +220,7 @@ private fun ScheduleItemRow(item: ScheduleItem, isLive: Boolean, isDarkTheme: Bo
         )
 
         Column(
-            modifier = Modifier.weight(1f).padding(end = 12.dp),
+            modifier = Modifier.weight(1f).padding(end = 4.dp),
             verticalArrangement = Arrangement.Center
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -235,6 +246,26 @@ private fun ScheduleItemRow(item: ScheduleItem, isLive: Boolean, isDarkTheme: Bo
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
+            )
+        }
+
+        IconButton(
+            onClick = {
+                favoritesViewModel.toggleArtist(
+                    FavoriteArtist(
+                        name = item.playlist.artist,
+                        slug = ArtistSlugMap.slugFor(item.playlist.artist),
+                        thumbnail = item.playlist.artwork
+                    )
+                )
+            },
+            modifier = Modifier.size(40.dp)
+        ) {
+            Icon(
+                imageVector = if (isFavorited) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                contentDescription = if (isFavorited) "Unfavourite artist" else "Favourite artist",
+                tint = if (isFavorited) MaterialTheme.colorScheme.primary
+                       else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -302,7 +333,7 @@ private fun findCurrentShowIndex(items: List<ScheduleItem>): Int {
     }
 }
 
-private fun formatTimeSlot(start: String, end: String): String {
+internal fun formatTimeSlot(start: String, end: String): String {
     val inFmt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US)
     val outFmt = SimpleDateFormat("HH:mm", Locale.US).also { it.timeZone = TimeZone.getDefault() }
     return runCatching {
