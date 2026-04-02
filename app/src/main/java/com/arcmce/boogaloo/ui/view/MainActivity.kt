@@ -285,8 +285,10 @@ fun AppContent(
 
                     composable("pastShow/{slug}") { backStackEntry ->
                         val slug = backStackEntry.arguments?.getString("slug") ?: return@composable
+                        val artistDisplayName = catchUpViewModel.catchupCardDataset.value
+                            .find { it.slug == slug }?.name ?: ""
                         val cloudcastViewModel: CloudcastViewModel = viewModel(backStackEntry, factory = cloudcastViewModelFactory)
-                        CloudcastView(cloudcastViewModel, slug, sharedViewModel, favoritesViewModel, onNavigateBack = { navController.popBackStack() })
+                        CloudcastView(cloudcastViewModel, slug, artistDisplayName, sharedViewModel, favoritesViewModel, onNavigateBack = { navController.popBackStack() })
                     }
                 }
 

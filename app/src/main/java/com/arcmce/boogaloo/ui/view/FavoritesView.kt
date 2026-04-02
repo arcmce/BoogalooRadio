@@ -351,13 +351,15 @@ private fun FavoriteMixRow(mix: FavoriteMix, onClick: (() -> Unit)?, onUnfavouri
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
-            Text(
-                text = mix.artistName,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            if (!mix.displayName.isNullOrEmpty()) {
+                Text(
+                    text = mix.displayName,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
         if (onClick != null) {
             Text(

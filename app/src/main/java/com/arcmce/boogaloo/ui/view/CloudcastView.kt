@@ -62,6 +62,7 @@ import kotlinx.coroutines.launch
 fun CloudcastView(
     viewModel: CloudcastViewModel,
     slug: String,
+    artistDisplayName: String,
     sharedViewModel: SharedViewModel,
     favoritesViewModel: FavoritesViewModel,
     onNavigateBack: () -> Unit
@@ -103,7 +104,7 @@ fun CloudcastView(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            CloudcastVerticalGrid(viewModel, isResumed, gridState, favoritesViewModel, slug)
+            CloudcastVerticalGrid(viewModel, isResumed, gridState, favoritesViewModel, slug, artistDisplayName)
         }
     }
 }
@@ -115,7 +116,8 @@ fun CloudcastVerticalGrid(
     isResumed: Boolean,
     gridState: LazyGridState,
     favoritesViewModel: FavoritesViewModel,
-    artistSlug: String
+    artistSlug: String,
+    artistDisplayName: String
 ) {
     val cardItems by viewModel.cloudcastCardDataset.collectAsState(initial = emptyList())
     val favoriteMixUrls by favoritesViewModel.favoriteMixUrls.collectAsState()
@@ -164,7 +166,8 @@ fun CloudcastVerticalGrid(
                                 url = selected.url,
                                 name = selected.name,
                                 thumbnail = selected.thumbnail,
-                                artistName = artistSlug
+                                artistName = artistSlug,
+                                displayName = artistDisplayName
                             )
                         )
                         selectedMixForMenu = null
