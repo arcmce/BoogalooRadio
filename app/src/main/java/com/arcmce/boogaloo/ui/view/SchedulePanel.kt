@@ -196,7 +196,7 @@ fun SchedulePanel(
 private fun ScheduleItemRow(item: ScheduleItem, isLive: Boolean, isDarkTheme: Boolean, favoritesViewModel: FavoritesViewModel) {
     val accentColor = rememberArtworkColor(item.playlist.artwork, isDarkTheme)
     val favoriteArtistNames by favoritesViewModel.favoriteArtistNames.collectAsState()
-    val isFavorited = item.playlist.artist in favoriteArtistNames
+    val isFavorited = item.playlist.name in favoriteArtistNames
 
     Row(
         modifier = Modifier
@@ -253,8 +253,8 @@ private fun ScheduleItemRow(item: ScheduleItem, isLive: Boolean, isDarkTheme: Bo
             onClick = {
                 favoritesViewModel.toggleArtist(
                     FavoriteArtist(
-                        name = item.playlist.artist,
-                        slug = ArtistSlugMap.slugFor(item.playlist.artist),
+                        name = item.playlist.name,
+                        slug = ArtistSlugMap.slugFor(item.playlist.name),
                         thumbnail = item.playlist.artwork
                     )
                 )
@@ -264,7 +264,7 @@ private fun ScheduleItemRow(item: ScheduleItem, isLive: Boolean, isDarkTheme: Bo
             Icon(
                 imageVector = if (isFavorited) Icons.Filled.Star else Icons.Outlined.StarBorder,
                 contentDescription = if (isFavorited) "Unfavourite artist" else "Favourite artist",
-                tint = if (isFavorited) MaterialTheme.colorScheme.primary
+                tint = if (isFavorited) Color(0xFFFFD700)
                        else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -339,4 +339,23 @@ internal fun formatTimeSlot(start: String, end: String): String {
     return runCatching {
         "${outFmt.format(inFmt.parse(start)!!)} – ${outFmt.format(inFmt.parse(end)!!)}"
     }.getOrDefault("$start – $end")
+}
+
+internal fun formatDateTimeSlot(start: String, end: String): String {
+    val inFmt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US)
+    val timeFmt = SimpleDateFormat("HH:mm", Locale.US).also { it.timeZone = TimeZone.getDefault() }
+    val dayFmt = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+    val today = dayFmt.format(Date())
+    val tomorrow = dayFmt.format(Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, 1) }.time)
+    return runCatching {
+        val startDate = inFmt.parse(start)!!
+        val endDate = inFmt.parse(end)!!
+        val dayKey = dayFmt.format(startDate)
+        val dayLabel = when (dayKey) {
+            today    -> "Today"
+            tomorrow -> "Tomorrow"
+            else     -> SimpleDateFormat("EEE d MMM", Locale.getDefault()).format(startDate)
+        }
+        "$dayLabel, ${timeFmt.format(startDate)}–${timeFmt.format(endDate)}"
+    }.getOrDefault("$start–$end")
 }

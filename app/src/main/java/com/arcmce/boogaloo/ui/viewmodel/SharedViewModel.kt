@@ -37,7 +37,7 @@ class SharedViewModel(private val application: Application) : AndroidViewModel(a
         _mixesTabTapped.tryEmit(Unit)
     }
 
-    private val _isDarkTheme = MutableStateFlow(false)
+private val _isDarkTheme = MutableStateFlow(false)
     val isDarkTheme: StateFlow<Boolean> = _isDarkTheme
 
     fun setIsDarkTheme(isDarkTheme: Boolean) {

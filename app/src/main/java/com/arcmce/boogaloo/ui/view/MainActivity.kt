@@ -156,6 +156,7 @@ fun AppContent(
     var showSocialsSheet by rememberSaveable { mutableStateOf(false) }
 
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+    val backStack by navController.currentBackStack.collectAsState()
 
     val selectedTab = when {
         currentRoute?.startsWith("pastShow") == true -> "CatchUp"
@@ -219,10 +220,14 @@ fun AppContent(
                     NavigationBarItem(
                         selected = selectedTab == "Favorites",
                         onClick = {
-                            navController.navigate("Favorites") {
-                                popUpTo("Live") { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
+                            if (backStack.any { it.destination.route == "Favorites" }) {
+                                navController.popBackStack("Favorites", inclusive = false)
+                            } else {
+                                navController.navigate("Favorites") {
+                                    popUpTo("Live") { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             }
                         },
                         icon = {
@@ -236,7 +241,13 @@ fun AppContent(
                     NavigationBarItem(
                         selected = selectedTab == "CatchUp",
                         onClick = {
-                            if (selectedTab == "CatchUp") {
+                            if (currentRoute?.startsWith("pastShow/") == true &&
+                                backStack.any { it.destination.route == "Favorites" }) {
+                                navController.navigate("CatchUp") {
+                                    popUpTo("Live") { inclusive = false }
+                                    launchSingleTop = true
+                                }
+                            } else if (selectedTab == "CatchUp") {
                                 sharedViewModel.triggerMixesTabTapped()
                             } else {
                                 navController.navigate("CatchUp") {

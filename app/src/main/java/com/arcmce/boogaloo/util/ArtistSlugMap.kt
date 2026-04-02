@@ -1,29 +1,38 @@
 package com.arcmce.boogaloo.util
 
 /**
- * Maps schedule artist names (from the radio.co API) to their Mixcloud playlist slugs.
- * Schedule uses show taglines in the artist field; this bridges them to Mixcloud.
- * Derived by cross-referencing schedule artist+show fields against Mixcloud playlist names.
+ * Maps schedule show names (playlist.name from the radio.co API) to their Mixcloud playlist slugs.
+ * Keys are the playlist.name values (the specific show/DJ identifier shown as secondary text
+ * in the schedule panel); values are Mixcloud slugs for navigating to that artist's mix archive.
+ * Re-derived 2026-04-02 by cross-referencing schedule playlist.name + playlist.artist values
+ * against https://api.mixcloud.com/BoogalooRadio/playlists/.
+ *
+ * Unmatched schedule names (no Mixcloud playlist found):
+ *   Amelie & Timothy, Astile Doherty, Bing Lewis, Christos Lawton, Darren Walker,
+ *   Dave Ashby, Jody and Daisy, Kieran Smyth, Raechel Donahue,
+ *   Stevie Windows Al & Indie, Tia O'Donnell, Tom Raine
  */
 object ArtistSlugMap {
 
     val map: Map<String, String> = mapOf(
-        "Adam Wedd"                                                  to "adam-wedd",
-        "All the latest Irish releases."                             to "tonn-\u00e9al\u00fa",
-        "Cherry Red Records"                                         to "cherry-red-records",
-        "Dancefloor Troubadour"                                      to "henry-shaw-aka-dancefloor-troubadour",
-        "Drum and Bass Show"                                         to "joy-doc",
-        "ft. Tears at the Table"                                     to "tune-in-with-tilly",
-        "Giddy up for Bonanza!"                                      to "bonanza",
-        "Guitars, games and gran\u2019s cheese and pickle sandwiches" to "jack-young-lewis-evans",
-        "Late Night With"                                            to "hanc",
-        "Loads of new music for you!"                                to "bing",
-        "Mates, Pints, Music"                                        to "kelly-jade",
-        "music from the outer reaches..."                            to "alastair-shuttleworth",
-        "Radio Activity"                                             to "radio-activity",
-        "Radio On"                                                   to "jim-fry",
-        "Trailers Movie show"                                        to "trailers-wayne-john-george",
-        "verything from punk to 60s pop! Join in for the pub quiz, and listen out for J Dangerous\u2019 spooky story..." to "les-miserables-singles-club",
+        // Exact name matches
+        "Adam Wedd"                      to "adam-wedd",
+        "Alastair Shuttleworth"          to "alastair-shuttleworth",
+        "Cherry Red Records"             to "cherry-red-records",
+        "Deb & Jules - Turn It Up Darling" to "deb-jules-turn-it-up-darling",
+        "HANC"                           to "hanc",
+        "Jim Fry"                        to "jim-fry",
+        "Joy Doc"                        to "joy-doc",
+        "Kelly Jade"                     to "kelly-jade",
+        // Derived from playlist.artist tagline or partial name match
+        "Cloe Lee"                       to "bonanza",               // artist: "Giddy up for Bonanza!"
+        "Henry Shaw"                     to "henry-shaw-aka-dancefloor-troubadour", // artist: "Dancefloor Troubadour"
+        "Jack Young & Lewis Evans"       to "jack-young-lewis-evans", // MC: "Jack Young & Lewis Evans present the Blue Harbour"
+        "Jeremy Thoms"                   to "radio-activity",         // artist: "Radio Activity"
+        "Les Miserable & J Dangerous"    to "les-miserables-singles-club", // MC: "Les Miserable"
+        "Tilly Bartelt"                  to "tune-in-with-tilly",     // MC: "Tune in with Tilly"
+        "Tonn Éalú"                      to "tonn-éalú",              // schedule name matches MC slug
+        "Wayne Gormally"                 to "trailers-wayne-john-george", // artist: "Trailers Movie show"
     )
 
     fun slugFor(artistName: String): String = map[artistName] ?: ""

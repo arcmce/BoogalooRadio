@@ -229,16 +229,35 @@ fun CardItemView(
                     modifier = Modifier.padding(8.dp)
                 )
             }
-            Icon(
-                imageVector = if (isFavorited) Icons.Filled.Star else Icons.Outlined.StarBorder,
-                contentDescription = null,
-                tint = if (isFavorited) MaterialTheme.colorScheme.primary
-                       else Color.White.copy(alpha = 0.7f),
+            Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(6.dp)
-                    .size(20.dp)
-            )
+            ) {
+                if (isFavorited) {
+                    Icon(
+                        imageVector = Icons.Filled.Star,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Icon(
+                        imageVector = Icons.Filled.Star,
+                        contentDescription = null,
+                        tint = Color(0xFFFFD700),
+                        modifier = Modifier
+                            .size(16.dp)
+                            .align(Alignment.Center)
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Outlined.StarBorder,
+                        contentDescription = null,
+                        tint = Color.White.copy(alpha = 0.7f),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
         }
     }
 }
