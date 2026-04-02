@@ -50,6 +50,13 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+private data class ArtistMixGroup(
+    val slug: String,
+    val displayName: String,
+    val artist: FavoriteArtist?,
+    val mixes: List<FavoriteMix>
+)
+
 @Composable
 fun FavoritesView(
     favoritesViewModel: FavoritesViewModel,
@@ -71,6 +78,24 @@ fun FavoritesView(
             }
             .sortedBy { it.start }
             .groupBy { it.playlist.name }
+    }
+
+    val artistMixGroups = remember(favoriteArtists, favoriteMixes) {
+        val artistsBySlug = favoriteArtists
+            .filter { it.slug.isNotEmpty() }
+            .associateBy { it.slug }
+        val mixesBySlug = favoriteMixes
+            .filter { it.artistName.isNotEmpty() }
+            .groupBy { it.artistName }
+        val allSlugs = (artistsBySlug.keys + mixesBySlug.keys).distinct()
+        allSlugs.map { slug ->
+            val artist = artistsBySlug[slug]
+            val mixes = mixesBySlug[slug] ?: emptyList()
+            val displayName = artist?.name
+                ?: mixes.firstOrNull { !it.displayName.isNullOrEmpty() }?.displayName
+                ?: slug
+            ArtistMixGroup(slug, displayName, artist, mixes)
+        }.sortedBy { it.displayName.lowercase() }
     }
 
     val pagerState = rememberPagerState { 2 }
@@ -100,8 +125,9 @@ fun FavoritesView(
                     onUnfavouriteArtist = { favoritesViewModel.toggleArtist(it) }
                 )
                 1 -> MixesTab(
-                    favoriteMixes = favoriteMixes,
+                    groups = artistMixGroups,
                     navController = navController,
+                    onUnfavouriteArtist = { favoritesViewModel.toggleArtist(it) },
                     onUnfavouriteMix = { favoritesViewModel.toggleMix(it) }
                 )
             }
@@ -207,6 +233,54 @@ private fun UpcomingTab(
 }
 
 @Composable
+private fun MixesTab(
+    groups: List<ArtistMixGroup>,
+    navController: NavController,
+    onUnfavouriteArtist: (FavoriteArtist) -> Unit,
+    onUnfavouriteMix: (FavoriteMix) -> Unit
+) {
+    LazyColumn(
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 80.dp),
+        verticalArrangement = Arrangement.spacedBy(0.dp),
+        modifier = Modifier.fillMaxSize()
+    ) {
+        if (groups.isEmpty()) {
+            item {
+                Text(
+                    text = "Long-hold a mix in the Mixes tab to save it here.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                    modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
+                )
+            }
+        } else {
+            groups.forEach { group ->
+                item(key = "header_${group.slug}") {
+                    ArtistSectionHeader(
+                        artistName = group.displayName,
+                        slug = group.slug,
+                        artist = group.artist,
+                        navController = navController,
+                        onUnfavouriteArtist = onUnfavouriteArtist
+                    )
+                    HorizontalDivider()
+                }
+                items(group.mixes, key = { it.url }) { mix ->
+                    FavoriteMixRow(
+                        mix = mix,
+                        onClick = if (group.slug.isNotEmpty()) {
+                            { navController.navigate("pastShow/${group.slug}") }
+                        } else null,
+                        onUnfavourite = { onUnfavouriteMix(mix) }
+                    )
+                    HorizontalDivider()
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun ArtistSectionHeader(
     artistName: String,
     slug: String,
@@ -261,41 +335,6 @@ private fun ArtistSectionHeader(
 }
 
 @Composable
-private fun MixesTab(
-    favoriteMixes: List<FavoriteMix>,
-    navController: NavController,
-    onUnfavouriteMix: (FavoriteMix) -> Unit
-) {
-    LazyColumn(
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 80.dp),
-        verticalArrangement = Arrangement.spacedBy(0.dp),
-        modifier = Modifier.fillMaxSize()
-    ) {
-        if (favoriteMixes.isEmpty()) {
-            item {
-                Text(
-                    text = "Long-hold a mix in the Mixes tab to save it here.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                    modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
-                )
-            }
-        } else {
-            items(favoriteMixes, key = { it.url }) { mix ->
-                FavoriteMixRow(
-                    mix = mix,
-                    onClick = if (mix.artistName.isNotEmpty()) {
-                        { navController.navigate("pastShow/${mix.artistName}") }
-                    } else null,
-                    onUnfavourite = { onUnfavouriteMix(mix) }
-                )
-                HorizontalDivider()
-            }
-        }
-    }
-}
-
-@Composable
 private fun FavoriteUpcomingRow(item: ScheduleItem) {
     Row(
         modifier = Modifier
@@ -343,31 +382,14 @@ private fun FavoriteMixRow(mix: FavoriteMix, onClick: (() -> Unit)?, onUnfavouri
                 .size(56.dp)
                 .clip(RoundedCornerShape(4.dp))
         )
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = mix.name,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-            if (!mix.displayName.isNullOrEmpty()) {
-                Text(
-                    text = mix.displayName,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-        }
-        if (onClick != null) {
-            Text(
-                text = "›",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+        Text(
+            text = mix.name,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f)
+        )
         IconButton(
             onClick = onUnfavourite,
             modifier = Modifier.size(36.dp)
