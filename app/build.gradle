@@ -4,6 +4,9 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+def keystoreProperties = new Properties()
+keystoreProperties.load(new FileInputStream(rootProject.file("keystore.properties")))
+
 android {
     namespace = "com.arcmce.boogaloo"
     compileSdk = libs.versions.compileSdk.get().toInteger()
@@ -18,8 +21,18 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        release {
+            storeFile file(keystoreProperties['storeFile'])
+            storePassword keystoreProperties['storePassword']
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig signingConfigs.release
             minifyEnabled = true
             proguardFiles(
                     getDefaultProguardFile("proguard-android-optimize.txt"),
